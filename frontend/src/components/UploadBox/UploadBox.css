@@ -1,0 +1,21 @@
+.uploadBox{
+display:flex;
+flex-direction:column;
+align-items:center;
+}
+
+.preview{
+width:200px;
+margin-top:15px;
+border-radius:8px;
+}
+
+.uploadBox button{
+margin-top:15px;
+background:#2563eb;
+color:white;
+border:none;
+padding:10px 15px;
+border-radius:6px;
+cursor:pointer;
+}
