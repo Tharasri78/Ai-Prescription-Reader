@@ -1,48 +1,56 @@
-import UploadBox from "../../components/UploadBox/UploadBox";
-import MedicineCard from "../../components/MedicineCard/MedicineCard";
-import Loader from "../../components/Loader/Loader";
+import { Link } from "react-router-dom";
 import "./Home.css";
 
 function Home() {
 
-const medicines = [
-  {
-    name: "Paracetamol",
-    dose: "500mg",
-    frequency: "Twice daily",
-    explanation: "Used for fever and pain relief"
-  },
-  {
-    name: "Azithromycin",
-    dose: "250mg",
-    frequency: "Once daily",
-    explanation: "Antibiotic used to treat infections"
-  }
-];
-
-return (
+return(
 
 <div className="home">
 
 <header className="navbar">
 <h2>AI Prescription Reader</h2>
+
+<div className="nav-buttons">
+<Link to="/login">Login</Link>
+<Link to="/register">Register</Link>
+</div>
+
 </header>
 
-<section className="upload-section">
-<h3>Upload Prescription</h3>
-<UploadBox/>
+
+<section className="hero">
+
+<h1>Understand Your Prescription Instantly</h1>
+
+<p>
+Upload a prescription and let AI extract medicines,
+dosage, and explanations automatically.
+</p>
+
+<Link to="/upload">
+<button className="primary-btn">
+Get Started
+</button>
+</Link>
+
 </section>
 
-<section className="results-section">
 
-<h3>Extracted Medicines</h3>
+<section className="features">
 
-<div className="medicine-grid">
+<div className="feature-card">
+<h3>Upload Prescription</h3>
+<p>Upload or capture a prescription image easily.</p>
+</div>
 
-{medicines.map((med,index)=>(
-<MedicineCard key={index} medicine={med}/>
-))}
+<div className="feature-card">
+<h3>AI Medicine Detection</h3>
+<p>Extract medicines, dosage, and frequency.</p>
+</div>
 
+<div className="feature-card">
+<h3>Clear Explanation</h3>
+<p>Understand medicines in simple language.</p>
 </div>
 
 </section>

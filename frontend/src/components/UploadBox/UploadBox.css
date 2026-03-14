@@ -1,21 +1,50 @@
-.uploadBox{
+.upload-box{
 display:flex;
 flex-direction:column;
 align-items:center;
 }
 
+.upload-area{
+border:2px dashed #2563eb;
+border-radius:10px;
+padding:40px;
+cursor:pointer;
+width:100%;
+text-align:center;
+transition:0.2s;
+}
+
+.upload-area:hover{
+background:#f1f5ff;
+}
+
+.upload-text p{
+font-weight:bold;
+color:#2563eb;
+}
+
+.upload-text span{
+font-size:14px;
+color:#777;
+}
+
 .preview{
-width:200px;
-margin-top:15px;
+margin-top:20px;
+width:220px;
 border-radius:8px;
 }
 
-.uploadBox button{
-margin-top:15px;
+.process-btn{
+margin-top:20px;
+padding:12px 20px;
 background:#2563eb;
 color:white;
 border:none;
-padding:10px 15px;
-border-radius:6px;
+border-radius:8px;
 cursor:pointer;
+font-size:15px;
+}
+
+.process-btn:hover{
+background:#1d4ed8;
 }

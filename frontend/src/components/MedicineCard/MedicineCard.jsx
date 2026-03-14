@@ -1,4 +1,4 @@
-import "./MedicineCard.css";
+import "./MedicineCard.css"
 
 function MedicineCard({medicine}){
 
@@ -12,9 +12,7 @@ return(
 
 <p><strong>Frequency:</strong> {medicine.frequency}</p>
 
-<p className="explanation">
-{medicine.explanation}
-</p>
+<p className="explanation">{medicine.explanation}</p>
 
 </div>
 
