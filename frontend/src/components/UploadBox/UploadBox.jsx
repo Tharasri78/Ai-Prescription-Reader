@@ -1,74 +1,90 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import "./UploadBox.css";
+import React, { useState } from 'react';
+import './UploadBox.css';
 
-function UploadBox(){
+const UploadBox = ({ onFileSelected, onCameraCapture }) => {
+  const [dragActive, setDragActive] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
 
-const [image,setImage] = useState(null)
-const navigate = useNavigate()
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
 
-function handleFile(e){
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFile(e.dataTransfer.files[0]);
+    }
+  };
 
-const file = e.target.files[0]
+  const handleFileSelect = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      handleFile(e.target.files[0]);
+    }
+  };
 
-if(file){
-setImage(URL.createObjectURL(file))
-}
+  const handleFile = (file) => {
+    setSelectedFile(file);
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    if (onFileSelected) {
+      onFileSelected(file);
+    }
+  };
 
-}
+  return (
+    <div 
+      className={`upload-box ${dragActive ? 'drag-active' : ''} ${selectedFile ? 'file-selected' : ''}`}
+      onDragEnter={handleDrag}
+      onDragLeave={handleDrag}
+      onDragOver={handleDrag}
+      onDrop={handleDrop}
+    >
+      <input 
+        type="file" 
+        id="file-input" 
+        className="file-input" 
+        accept="image/*,.pdf"
+        onChange={handleFileSelect}
+      />
+      
+      {!selectedFile ? (
+        <div className="upload-prompt">
+          <div className="upload-icon">📄</div>
+          <h3>Drag & Drop</h3>
+          <p>or click to browse</p>
+          <span className="upload-hint">Supports: JPG, PNG, PDF</span>
+        </div>
+      ) : (
+        <div className="file-preview">
+          {previewUrl && (
+            <img src={previewUrl} alt="Preview" className="preview-image" />
+          )}
+          <div className="file-info">
+            <span className="file-name">{selectedFile.name}</span>
+            <span className="file-size">
+              {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+            </span>
+          </div>
+          <button 
+            className="change-file-btn"
+            onClick={() => document.getElementById('file-input').click()}
+          >
+            Change
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
 
-function processPrescription(){
-
-// later backend will be called here
-
-navigate("/results")
-
-}
-
-return(
-
-<div className="upload-box">
-
-<label className="upload-area">
-
-<input
-type="file"
-onChange={handleFile}
-hidden
-/>
-
-<div className="upload-text">
-
-<p>Drag & Drop Prescription</p>
-<span>or click to browse</span>
-
-</div>
-
-</label>
-
-{image && (
-
-<img
-src={image}
-alt="preview"
-className="preview"
-/>
-
-)}
-
-<button
-className="process-btn"
-onClick={processPrescription}
->
-
-Process Prescription
-
-</button>
-
-</div>
-
-)
-
-}
-
-export default UploadBox
+export default UploadBox;
