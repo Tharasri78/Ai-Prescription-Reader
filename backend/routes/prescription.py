@@ -1,29 +1,22 @@
-from fastapi import APIRouter, UploadFile, File
-import shutil
-import os
+from fastapi import APIRouter, UploadFile
+from ai.image_processing import save_uploaded_file
+from ai.ocr_engine import read_prescription
+from ai.medicine_extractor import extract_medicines
+from ai.ai_explainer import explain_medicines
 
 router = APIRouter()
 
-UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-
 @router.post("/upload")
-async def upload_prescription(file: UploadFile = File(...)):
+async def upload_prescription(file: UploadFile):
+    file_path = save_uploaded_file(file)
 
-    file_path = f"{UPLOAD_FOLDER}/{file.filename}"
+    # OCR step
+    text = read_prescription(file_path, engine="trocr")
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    # 👇 Add this line to debug
+    print("OCR Output:", text)
 
-    # dummy response for now
-    medicines = [
-        {
-            "name": "Paracetamol",
-            "dose": "500mg",
-            "frequency": "Twice daily",
-            "explanation": "Used for fever and pain relief"
-        }
-    ]
-
-    return {"medicines": medicines}
+    # Extraction
+    medicines = extract_medicines(text)
+    explained = explain_medicines(medicines)
+    return {"medicines": explained}

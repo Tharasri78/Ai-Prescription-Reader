@@ -1,20 +1,12 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from routes.prescription import router as prescription_router
+from routes import prescription
+from routes import auth
 
 app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-app.include_router(prescription_router)
-
+app.include_router(prescription.router)
+app.include_router(auth.router)
 
 @app.get("/")
-def root():
+def home():
     return {"message": "AI Prescription Reader API running"}
