@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Navbar from '../../components/Navbar/Navbar';
 import './Home.css';
 
 const Home = () => {
@@ -24,44 +25,29 @@ const Home = () => {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // Smooth scroll function
-  const scrollToSection = (ref) => {
-    if (ref && ref.current) {
-      ref.current.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'start',
-      });
-    }
-  };
-
   const features = [
     {
-      
       title: "Smart Capture",
       description: "Upload or capture prescription images with instant preview"
     },
     {
-     
       title: "AI Enhancement",
       description: "Advanced image processing for maximum OCR accuracy"
     },
     {
-     
       title: "Medicine Cards",
       description: "Structured, easy-to-read medicine information"
     },
     {
-     
       title: "AI Explanations",
       description: "Simple, clear explanations for every medicine"
     }
   ];
 
   const stats = [
-  { number: "99%", label: "Accuracy Rate" },
-  { number: "100+", label: "Users" },        // Changed from 50k+ Prescriptions
-  { number: "5+", label: "Medicines" },       // Changed from 10+ Languages
-  { number: "24/7", label: "Availability" }
+    { number: "99%", label: "Accuracy Rate" },
+    { number: "5+", label: "Medicines" },
+    { number: "24/7", label: "Availability" }
   ];
 
   return (
@@ -89,49 +75,11 @@ const Home = () => {
         <div className="floating-element bounce">📋</div>
       </div>
 
-      {/* Navigation - FIXED with scroll functionality */}
-      <nav className={`navbar ${isVisible ? 'nav-visible' : ''}`}>
-        <div className="nav-brand" onClick={() => scrollToSection(homeRef)} style={{cursor: 'pointer'}}>
-          <span className="brand-icon">💊</span>
-          <span className="brand-name">Medi<span className="brand-highlight">Scan</span></span>
-        </div>
-        <div className="nav-links">
-          <button 
-            className="nav-link" 
-            onClick={() => scrollToSection(homeRef)}
-          >
-            Home
-          </button>
-          <button 
-            className="nav-link" 
-            onClick={() => scrollToSection(featuresRef)}
-          >
-            Features
-          </button>
-          <button 
-            className="nav-link" 
-            onClick={() => scrollToSection(howItWorksRef)}
-          >
-            How It Works
-          </button>
-          <button 
-            className="nav-link" 
-            onClick={() => scrollToSection(aboutRef)}
-          >
-            About
-          </button>
-        </div>
-        <div className="nav-actions">
-            
-          <button className="btn-outline" onClick={() => navigate('/login')}>Sign In</button>
-          <button className="btn-primary" onClick={() => navigate('/register')}>Get Started</button>
-        </div>
-        
-        
-      </nav>
+      {/* Navbar */}
+      <Navbar isVisible={isVisible} />
 
-      {/* Hero Section - with ref for Home */}
-      <section ref={homeRef} className={`hero-section ${isVisible ? 'hero-visible' : ''}`}>
+      {/* Hero Section - with id="home" */}
+      <section id="home" ref={homeRef} className={`hero-section ${isVisible ? 'hero-visible' : ''}`}>
         <div className="hero-content">
           <div className="hero-badge">
             <span className="badge-pulse"></span>
@@ -145,7 +93,7 @@ const Home = () => {
           
           <p className="hero-subtitle">
             Transform handwritten prescriptions into clear, digital medicine information.
-            Smart OCR meets AI for perfect readability every time.
+            
           </p>
 
           <div className="hero-actions">
@@ -153,7 +101,6 @@ const Home = () => {
               Start Scanning
               <span className="btn-arrow">→</span>
             </button>
-           
           </div>
 
           <div className="hero-stats">
@@ -198,8 +145,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Features Section - with ref */}
-      <section ref={featuresRef} className="features-section">
+      {/* Features Section - with id="features" */}
+      <section id="features" ref={featuresRef} className="features-section">
         <div className="section-header">
           <h2 className="section-title">
             Why Choose <span className="title-gradient">MediScan</span>
@@ -212,7 +159,6 @@ const Home = () => {
         <div className="features-grid">
           {features.map((feature, index) => (
             <div key={index} className="feature-card">
-              <div className="feature-icon">{feature.icon}</div>
               <h3 className="feature-title">{feature.title}</h3>
               <p className="feature-description">{feature.description}</p>
               <div className="feature-hover-effect"></div>
@@ -221,8 +167,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* How It Works Section - with ref */}
-      <section ref={howItWorksRef} className="how-it-works">
+      {/* How It Works Section - with id="how-it-works" */}
+      <section id="how-it-works" ref={howItWorksRef} className="how-it-works">
         <div className="section-header">
           <h2 className="section-title">
             Simple <span className="title-gradient">3-Step</span> Process
@@ -261,8 +207,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* About Section - with ref */}
-      <section ref={aboutRef} className="about-section">
+      {/* About Section - with id="about" */}
+      <section id="about" ref={aboutRef} className="about-section">
         <div className="section-header">
           <h2 className="section-title">
             About <span className="title-gradient">MediScan</span>
@@ -283,11 +229,6 @@ const Home = () => {
               making prescription information clear and accessible to everyone, regardless of 
               language or location.
             </p>
-            <div className="about-stats">
-              
-              
-              
-            </div>
           </div>
           <div className="about-image">
             <div className="about-card">
@@ -305,7 +246,6 @@ const Home = () => {
             Ready to Transform Your Prescription Experience?
           </h2>
           <p className="cta-subtitle">
-            Join thousands of users who trust MediScan for accurate prescription reading
           </p>
           <button className="btn-primary btn-large" onClick={() => navigate('/register')}>
             Get Started Now
@@ -328,32 +268,35 @@ const Home = () => {
           <div className="footer-links">
             <div className="footer-column">
               <h4>Product</h4>
-              <button className="footer-link" onClick={() => scrollToSection(featuresRef)}>Features</button>
-              <button className="footer-link" onClick={() => scrollToSection(howItWorksRef)}>How It Works</button>
-              <button className="footer-link" onClick={() => navigate('/pricing')}>Pricing</button>
-              <button className="footer-link" onClick={() => navigate('/faq')}>FAQ</button>
+              <button className="footer-link" onClick={() => {
+                document.getElementById('')?.scrollIntoView({ behavior: 'smooth' });
+              }}>Features</button>
+              <button className="footer-link" onClick={() => {
+                document.getElementById('')?.scrollIntoView({ behavior: 'smooth' });
+              }}>How It Works</button>
+              <button className="footer-link" onClick={() => navigate('')}>FAQ</button>
             </div>
             
             <div className="footer-column">
               <h4>Company</h4>
-              <button className="footer-link" onClick={() => scrollToSection(aboutRef)}>About</button>
-              <button className="footer-link" onClick={() => navigate('/blog')}>Blog</button>
-              <button className="footer-link" onClick={() => navigate('/careers')}>Careers</button>
-              <button className="footer-link" onClick={() => navigate('/contact')}>Contact</button>
+              <button className="footer-link" onClick={() => {
+                document.getElementById('')?.scrollIntoView({ behavior: 'smooth' });
+              }}>About</button>
+              <button className="footer-link" onClick={() => navigate('')}>Careers</button>
+              <button className="footer-link" onClick={() => navigate('')}>Contact</button>
             </div>
             
             <div className="footer-column">
               <h4>Legal</h4>
-              <button className="footer-link" onClick={() => navigate('/privacy')}>Privacy</button>
-              <button className="footer-link" onClick={() => navigate('/terms')}>Terms</button>
-              <button className="footer-link" onClick={() => navigate('/security')}>Security</button>
+              <button className="footer-link" onClick={() => navigate('')}>Privacy</button>
+              <button className="footer-link" onClick={() => navigate('')}>Terms</button>
+              <button className="footer-link" onClick={() => navigate('')}>Security</button>
             </div>
           </div>
         </div>
         
         <div className="footer-bottom">
-          <p>&copy; 2024 MediScan. All rights reserved.</p>
-          
+          <p>&copy; 2026 MediScan. All rights reserved.</p>
         </div>
       </footer>
     </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Navbar from '../../components/Navbar/Navbar'; // Add this import
 import UploadBox from '../../components/UploadBox/UploadBox';
 import './Upload.css';
 
@@ -43,7 +44,8 @@ const Upload = () => {
         <div className="gradient-sphere sphere-3"></div>
       </div>
 
-      
+      {/* Add Navbar */}
+      <Navbar isVisible={isVisible} />
 
       {/* Upload Content */}
       <div className={`upload-content ${isVisible ? 'content-visible' : ''}`}>
@@ -59,7 +61,6 @@ const Upload = () => {
             onCameraCapture={handleCameraCapture}
           />
 
-         
           {/* Process Button */}
           {selectedFile && (
             <button 
@@ -84,7 +85,7 @@ const Upload = () => {
           {/* Info Cards */}
           <div className="upload-info">
             <div className="info-card">
-          <div className="info-text">
+              <div className="info-text">
                 <h4>Secure Processing</h4>
                 <p>Your images are encrypted and never shared</p>
               </div>
@@ -98,7 +99,6 @@ const Upload = () => {
             </div>
             
             <div className="info-card">
-              
               <div className="info-text">
                 <h4>High Accuracy</h4>
                 <p>99% accurate medicine recognition</p>

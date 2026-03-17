@@ -1,8 +1,8 @@
 from fastapi import APIRouter, UploadFile
-from ai.image_processing import save_uploaded_file
-from ai.ocr_engine import read_prescription
-from ai.medicine_extractor import extract_medicines
-from ai.ai_explainer import explain_medicines
+from backend.ai.services.image_processing import save_uploaded_file
+from backend.ai.services.ocr_engine import read_prescription
+from backend.ai.services.medicine_extractor import extract_medicines
+from backend.ai.services.ai_explainer import explain_medicines
 
 router = APIRouter()
 

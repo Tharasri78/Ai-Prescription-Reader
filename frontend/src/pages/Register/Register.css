@@ -365,3 +365,91 @@
     font-size: 1.8rem;
   }
 }
+
+/* Add these styles to your Register.css */
+
+.error-message {
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid #ff4444;
+  color: #ff4444;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.success-message {
+  background: rgba(72, 201, 176, 0.1);
+  border: 1px solid #48c9b0;
+  color: #48c9b0;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.error-action {
+  margin-top: 0.5rem;
+}
+
+.error-action a {
+  color: #ff4444;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.password-hint {
+  margin: 0.5rem 0;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.password-hint p {
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 0.25rem;
+}
+
+.password-hint ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.password-hint li {
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0.25rem 0;
+  transition: color 0.3s ease;
+}
+
+.password-hint li.valid {
+  color: #48c9b0;
+}
+
+.register-submit-btn.loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Disabled input styling */
+input:disabled, button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

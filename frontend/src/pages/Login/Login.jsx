@@ -1,20 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { authService } from '../../services/api';
+import { useUser } from '../../context/UserContext';
+import Navbar from '../../components/Navbar/Navbar';
 import './Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useUser();
   const [isVisible, setIsVisible] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
-  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     setIsVisible(true);
-  }, []);
+    
+    // If already logged in, redirect to upload
+    if (authService.isAuthenticated()) {
+      navigate('/upload');
+    }
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,12 +32,51 @@ const Login = () => {
       ...prev,
       [name]: value
     }));
+    setError('');
   };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (!formData.email || !formData.password) {
+    setError('Please enter both email and password');
+    return;
+  }
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  setLoading(true);
+  setError('');
+
+  try {
+    console.log('📤 Attempting login with:', formData.email);
+    
+    const response = await authService.login({
+      email: formData.email,
+      password: formData.password
+    });
+
+    console.log('✅ Login successful:', response);
+    
+    // Set user in context
+    login(response.user);
+    
     navigate('/upload');
-  };
+
+  } catch (err) {
+    console.error('❌ Login failed:', err);
+    
+    // Handle error based on your backend response structure
+    if (err.message === 'Invalid credentials') {
+      setError('Invalid email or password');
+    } else if (err.message === 'Network Error - Cannot connect to server') {
+      setError('Cannot connect to server. Make sure backend is running on port 5000');
+    } else if (err.message) {
+      setError(err.message);
+    } else {
+      setError('Login failed. Please try again.');
+    }
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="login-container">
@@ -38,22 +87,21 @@ const Login = () => {
         <div className="gradient-sphere sphere-3"></div>
       </div>
 
-      {/* Simple Navigation */}
-      <nav className={`login-nav ${isVisible ? 'nav-visible' : ''}`}>
-        <div className="nav-brand" onClick={() => navigate('/')}>
-          <span className="brand-name">MediScan</span>
-        </div>
-        <div className="nav-actions">
-          <button className="btn-outline" onClick={() => navigate('/login')}>Sign In</button>
-          <button className="btn-primary" onClick={() => navigate('/register')}>Register</button>
-        </div>
-      </nav>
+      {/* Navbar */}
+      <Navbar isVisible={isVisible} />
 
-      {/* Simple Login Form */}
+      {/* Login Form */}
       <div className={`login-simple ${isVisible ? 'content-visible' : ''}`}>
         <div className="login-simple-card">
           <h1>Welcome Back</h1>
           <p className="login-simple-sub">Sign in to your account</p>
+
+          {/* Error Message */}
+          {error && (
+            <div className="error-message">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="login-simple-form">
             <input
@@ -63,6 +111,7 @@ const Login = () => {
               value={formData.email}
               onChange={handleChange}
               required
+              disabled={loading}
             />
 
             <div className="password-wrapper">
@@ -73,31 +122,31 @@ const Login = () => {
                 value={formData.password}
                 onChange={handleChange}
                 required
+                disabled={loading}
               />
               <button 
                 type="button"
                 className="password-toggle"
                 onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
               >
                 {showPassword ? "👁️" : "👁️‍🗨️"}
               </button>
             </div>
 
-            <div className="login-options">
-              <div className="remember-checkbox">
-                <input
-                  type="checkbox"
-                  id="remember"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                />
-                <label htmlFor="remember">Remember me</label>
-              </div>
-              <Link to="/forgot-password" className="forgot-link">Forgot Password?</Link>
-            </div>
-
-            <button type="submit" className="login-submit-btn">
-              Sign In
+            <button 
+              type="submit" 
+              className={`login-submit-btn ${loading ? 'loading' : ''}`}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner"></span>
+                  Signing in...
+                </>
+              ) : (
+                'Sign In'
+              )}
             </button>
           </form>
 
@@ -105,7 +154,7 @@ const Login = () => {
             <span>or</span>
           </div>
 
-
+          
           <p className="register-link-simple">
             Don't have an account? <Link to="/register">Sign Up</Link>
           </p>

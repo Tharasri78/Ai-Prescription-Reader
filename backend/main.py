@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routes import prescription
+from backend.ai.services import prescription
 from routes import auth
 
 app = FastAPI()

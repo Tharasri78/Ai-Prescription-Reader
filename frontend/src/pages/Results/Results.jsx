@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Navbar from '../../components/Navbar/Navbar'; // Add this import
 import MedicineCard from '../../components/MedicineCard/MedicineCard';
 import './Results.css';
 
@@ -49,14 +50,6 @@ const Results = () => {
     navigate('/upload');
   };
 
-  const handleDownload = () => {
-    alert('Downloading prescription as PDF...');
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
   return (
     <div className="results-container">
       {/* Animated Background */}
@@ -66,7 +59,8 @@ const Results = () => {
         <div className="gradient-sphere sphere-3"></div>
       </div>
 
-      
+      {/* Add Navbar */}
+      <Navbar isVisible={isVisible} />
 
       {/* Results Content */}
       <div className={`results-content ${isVisible ? 'content-visible' : ''}`}>
@@ -77,9 +71,9 @@ const Results = () => {
           </div>
           
           <div className="results-actions">
-           
-            
-           
+            <button className="action-btn primary" onClick={handleNewScan}>
+              New Scan
+            </button>
           </div>
         </div>
 
