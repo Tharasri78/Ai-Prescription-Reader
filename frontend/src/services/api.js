@@ -3,74 +3,101 @@ import axios from 'axios';
 // Get API URL from environment variable
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-console.log('🌐 Connecting to backend at:', API_URL);
+// Debug (only in development)
+if (import.meta.env.DEV) {
+  console.log('🌐 Connecting to backend at:', API_URL);
+}
 
+// Axios instance
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 second timeout
+  timeout: 20000, // ✅ increased for AI calls
 });
 
-// Add token to requests
+// -------------------------------
+// 🔐 REQUEST INTERCEPTOR
+// -------------------------------
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log('🚀 Request:', config.method.toUpperCase(), config.url);
+
+    if (import.meta.env.DEV) {
+      console.log('🚀 Request:', config.method.toUpperCase(), config.url);
+    }
+
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Handle response errors
+// -------------------------------
+// ❌ RESPONSE INTERCEPTOR
+// -------------------------------
 api.interceptors.response.use(
   (response) => {
-    console.log('✅ Response:', response.status);
+    if (import.meta.env.DEV) {
+      console.log('✅ Response:', response.status);
+    }
     return response;
   },
   (error) => {
+    // Timeout
     if (error.code === 'ECONNABORTED') {
       console.error('❌ Request timeout');
-      return Promise.reject({ message: 'Server timeout. Please try again.' });
+      return Promise.reject({
+        message: 'Server timeout. AI processing may be slow. Try again.',
+      });
     }
-    
+
+    // Network error
     if (!error.response) {
-      console.error('❌ Network Error - Cannot reach server');
-      return Promise.reject({ message: 'Cannot connect to server. Make sure backend is running on port 5000' });
+      console.error('❌ Network Error');
+      return Promise.reject({
+        message: 'Cannot connect to backend. Make sure server is running.',
+      });
     }
-    
+
+    // Unauthorized
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
-    
+
     return Promise.reject(error.response?.data || error);
   }
 );
 
+// -------------------------------
+// 🔐 AUTH SERVICE
+// -------------------------------
 export const authService = {
-  // Register user
+  // Register
   register: async (userData) => {
     try {
       const response = await api.post('/auth/register', {
         fullName: userData.fullName,
         email: userData.email,
         password: userData.password,
-        confirmPassword: userData.confirmPassword
+        confirmPassword: userData.confirmPassword,
       });
-      
-      console.log('📥 Register response:', response.data);
-      
+
+      if (import.meta.env.DEV) {
+        console.log('📥 Register response:', response.data);
+      }
+
       if (response.data.success && response.data.token) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
-        return response.data;
       }
+
       return response.data;
     } catch (error) {
       console.error('❌ Register error:', error);
@@ -78,21 +105,23 @@ export const authService = {
     }
   },
 
-  // Login user
+  // Login
   login: async (credentials) => {
     try {
       const response = await api.post('/auth/login', {
         email: credentials.email,
-        password: credentials.password
+        password: credentials.password,
       });
-      
-      console.log('📥 Login response:', response.data);
-      
+
+      if (import.meta.env.DEV) {
+        console.log('📥 Login response:', response.data);
+      }
+
       if (response.data.success && response.data.token) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
-        return response.data;
       }
+
       return response.data;
     } catch (error) {
       console.error('❌ Login error:', error);
@@ -100,32 +129,61 @@ export const authService = {
     }
   },
 
-  // Logout user
+  // Logout
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   },
 
-  // Get current user
+  // Get user
   getCurrentUser: () => {
     const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        return JSON.parse(userStr);
-      } catch (e) {
-        console.error('❌ Error parsing user:', e);
-        return null;
-      }
+    if (!userStr) return null;
+
+    try {
+      return JSON.parse(userStr);
+    } catch {
+      return null;
     }
-    return null;
   },
 
-  // Check if user is authenticated
+  // Auth check
   isAuthenticated: () => {
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    return !!(token && user);
-  }
+    return !!(localStorage.getItem('token') && localStorage.getItem('user'));
+  },
 };
 
+// -------------------------------
+// 🤖 SCAN SERVICE (NEW)
+// -------------------------------
+export const scanService = {
+  scanPrescription: async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await api.post(
+        '/scan/prescription',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          timeout: 20000, // AI can take time
+        }
+      );
+
+      if (import.meta.env.DEV) {
+        console.log('📥 Scan response:', response.data);
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('❌ Scan error:', error);
+      throw error;
+    }
+  },
+};
+
+// Export axios instance
 export default api;

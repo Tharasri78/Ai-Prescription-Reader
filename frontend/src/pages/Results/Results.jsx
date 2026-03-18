@@ -1,50 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Navbar from '../../components/Navbar/Navbar'; // Add this import
+import { useNavigate, useLocation } from 'react-router-dom'; // ✅ ADDED useLocation
+import Navbar from '../../components/Navbar/Navbar'; 
 import MedicineCard from '../../components/MedicineCard/MedicineCard';
 import './Results.css';
 
 const Results = () => {
   const navigate = useNavigate();
+  const location = useLocation(); // ✅ ADDED
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
-  // Sample medicine data
-  const medicines = [
-    {
-      id: 1,
-      name: "Paracetamol",
-      dosage: "500mg",
-      frequency: "Twice daily",
-      description: "Used for fever and pain relief",
-      instructions: "Take after meals with water",
-      sideEffects: "May cause drowsiness",
-      color: "#667eea"
-    },
-    {
-      id: 2,
-      name: "Azithromycin",
-      dosage: "250mg",
-      frequency: "Once daily",
-      description: "Antibiotic used to treat infections",
-      instructions: "Take on empty stomach, complete full course",
-      sideEffects: "May cause stomach upset",
-      color: "#764ba2"
-    },
-    {
-      id: 3,
-      name: "Amoxicillin",
-      dosage: "500mg",
-      frequency: "Three times daily",
-      description: "Penicillin antibiotic",
-      instructions: "Take with food to avoid stomach issues",
-      sideEffects: "May cause diarrhea",
-      color: "#48c9b0"
-    }
-  ];
+  // 🔥 REPLACED SAMPLE DATA WITH REAL DATA
+  const medicines = location.state?.medicines || [];
 
   const handleNewScan = () => {
     navigate('/upload');
@@ -77,12 +47,16 @@ const Results = () => {
           </div>
         </div>
 
-        {/* Medicines Grid */}
-        <div className="medicines-grid">
-          {medicines.map((medicine) => (
-            <MedicineCard key={medicine.id} medicine={medicine} />
-          ))}
-        </div>
+        {/* 🔥 EMPTY STATE HANDLING */}
+        {medicines.length === 0 ? (
+          <h2>No medicines detected</h2>
+        ) : (
+          <div className="medicines-grid">
+            {medicines.map((medicine, index) => (
+              <MedicineCard key={index} medicine={medicine} />
+            ))}
+          </div>
+        )}
 
         {/* Summary Section */}
         <div className="results-summary">
@@ -98,14 +72,19 @@ const Results = () => {
             <div className="summary-card">
               <div className="summary-info">
                 <span className="summary-label">Daily Doses</span>
-                <span className="summary-value">6</span>
+                <span className="summary-value">
+                  {/* 🔥 simple dynamic calc */}
+                  {medicines.length * 2}
+                </span>
               </div>
             </div>
             
             <div className="summary-card">
               <div className="summary-info">
                 <span className="summary-label">Duration</span>
-                <span className="summary-value">5 days</span>
+                <span className="summary-value">
+                  {medicines[0]?.duration || 'N/A'}
+                </span>
               </div>
             </div>
           </div>

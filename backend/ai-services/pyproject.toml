@@ -1,0 +1,18 @@
+[project]
+name = "ai-services"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.135.1",
+    "numpy>=2.2.6",
+    "opencv-python>=4.13.0.92",
+    "pillow>=12.1.1",
+    "pytesseract>=0.3.13",
+    "python-multipart>=0.0.22",
+    "torch>=2.10.0",
+    "torchvision>=0.25.0",
+    "transformers>=5.3.0",
+    "uvicorn>=0.42.0",
+]

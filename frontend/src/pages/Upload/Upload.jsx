@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar/Navbar'; // Add this import
 import UploadBox from '../../components/UploadBox/UploadBox';
+import { scanService } from '../../services/api'; // ✅ ADDED
 import './Upload.css';
 
 const Upload = () => {
@@ -23,16 +24,23 @@ const Upload = () => {
     alert('Camera feature would open here');
   };
 
-  const handleUpload = () => {
+  // 🔥 ONLY THIS FUNCTION CHANGED
+  const handleUpload = async () => {
     if (!selectedFile) return;
     
-    setIsProcessing(true);
-    
-    // Simulate processing
-    setTimeout(() => {
+    try {
+      setIsProcessing(true);
+
+      const data = await scanService.scanPrescription(selectedFile); // ✅ REAL API CALL
+
+      navigate('/results', { state: data }); // ✅ PASS DATA
+
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Scan failed");
+    } finally {
       setIsProcessing(false);
-      navigate('/results');
-    }, 3000);
+    }
   };
 
   return (
@@ -71,7 +79,7 @@ const Upload = () => {
               {isProcessing ? (
                 <>
                   <span className="spinner"></span>
-                  Processing...
+                  Scanning... {/* ✅ changed text */}
                 </>
               ) : (
                 <>

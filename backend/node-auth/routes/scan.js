@@ -13,14 +13,14 @@ const User = require('../models/User');
 router.post('/prescription', protect, async (req, res) => {
   try {
     // Check if file exists
-    if (!req.files || !req.files.image) {
+    if (!req.files || !req.files.file) {
       return res.status(400).json({
         success: false,
         message: 'No image file uploaded'
       });
     }
 
-    const image = req.files.image;
+    const image = req.files.file;
     
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
@@ -43,11 +43,12 @@ router.post('/prescription', protect, async (req, res) => {
     const formData = new FormData();
     formData.append('file', fs.createReadStream(image.tempFilePath));
 
-    console.log(`📤 Sending to Python AI: ${process.env.PYTHON_AI_URL}/process`);
+    // FIXED LOG
+    console.log(`📤 Sending to Python AI: ${process.env.PYTHON_AI_URL}/scan`);
 
     // Call Python AI service
     const aiResponse = await axios.post(
-      `${process.env.PYTHON_AI_URL}/process`,
+      `${process.env.PYTHON_AI_URL}/scan`,
       formData,
       {
         headers: {
@@ -72,16 +73,16 @@ router.post('/prescription', protect, async (req, res) => {
     res.json({
       success: true,
       medicines: aiResponse.data.medicines,
-      text: aiResponse.data.text,
+      raw_text: aiResponse.data.raw_text,
       message: 'Prescription processed successfully'
     });
 
   } catch (error) {
     console.error('Scan error:', error);
 
-    // Clean up temp file if exists
-    if (req.files?.image?.tempFilePath && fs.existsSync(req.files.image.tempFilePath)) {
-      fs.unlinkSync(req.files.image.tempFilePath);
+    // FIXED CLEANUP
+    if (req.files?.file?.tempFilePath && fs.existsSync(req.files.file.tempFilePath)) {
+      fs.unlinkSync(req.files.file.tempFilePath);
     }
 
     // Handle specific errors
@@ -111,7 +112,6 @@ router.post('/prescription', protect, async (req, res) => {
 // @access  Private
 router.get('/history', protect, async (req, res) => {
   try {
-    // You can implement scan history storage in MongoDB
     res.json({
       success: true,
       scansCount: req.user.scansCount,
