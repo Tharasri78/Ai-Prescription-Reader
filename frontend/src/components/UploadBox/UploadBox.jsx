@@ -62,7 +62,7 @@ const UploadBox = ({ onFileSelected, onCameraCapture }) => {
           <div className="upload-icon">📄</div>
           <h3>Drag & Drop</h3>
           <p>or click to browse</p>
-          <span className="upload-hint">Supports: JPG, PNG, PDF</span>
+          <span className="upload-hint">Supports: JPG, PNG</span>
         </div>
       ) : (
         <div className="file-preview">
