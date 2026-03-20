@@ -1,17 +1,27 @@
 import React, { useState } from 'react';
 import './UploadBox.css';
+import { scanService } from '../../services/api';
+import { useNavigate } from 'react-router-dom';
 
-const UploadBox = ({ onFileSelected, onCameraCapture }) => {
+const UploadBox = ({ onFileSelected }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const navigate = useNavigate();
+
+  // -----------------------
+  // DRAG HANDLERS
+  // -----------------------
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (e.type === "dragenter" || e.type === "dragover") {
       setDragActive(true);
-    } else if (e.type === "dragleave") {
+    } else {
       setDragActive(false);
     }
   };
@@ -20,7 +30,7 @@ const UploadBox = ({ onFileSelected, onCameraCapture }) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFile(e.dataTransfer.files[0]);
     }
@@ -32,31 +42,67 @@ const UploadBox = ({ onFileSelected, onCameraCapture }) => {
     }
   };
 
+  // -----------------------
+  // FILE HANDLING
+  // -----------------------
   const handleFile = (file) => {
     setSelectedFile(file);
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
+
     if (onFileSelected) {
       onFileSelected(file);
     }
   };
 
+  // -----------------------
+  // SCAN FUNCTION (🔥 MAIN FIX)
+  // -----------------------
+  const handleScan = async () => {
+    if (!selectedFile) {
+      alert("Select a file first");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setMessage("🔍 Analyzing prescription...");
+
+      const result = await scanService.scanPrescription(selectedFile);
+
+      setMessage("🧠 Extracting medicines...");
+
+      setTimeout(() => {
+        navigate('/results', { state: result });
+      }, 700);
+
+    } catch (error) {
+      console.error(error);
+      setMessage("❌ Failed to scan. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // -----------------------
+  // UI
+  // -----------------------
   return (
-    <div 
+    <div
       className={`upload-box ${dragActive ? 'drag-active' : ''} ${selectedFile ? 'file-selected' : ''}`}
       onDragEnter={handleDrag}
       onDragLeave={handleDrag}
       onDragOver={handleDrag}
       onDrop={handleDrop}
     >
-      <input 
-        type="file" 
-        id="file-input" 
-        className="file-input" 
-        accept="image/*,.pdf"
+      <input
+        type="file"
+        id="file-input"
+        className="file-input"
+        accept="image/*"
         onChange={handleFileSelect}
       />
-      
+
       {!selectedFile ? (
         <div className="upload-prompt">
           <div className="upload-icon">📄</div>
@@ -75,14 +121,26 @@ const UploadBox = ({ onFileSelected, onCameraCapture }) => {
             <span className="file-size">
               {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
             </span>
+
             <button
-      className="change-file-btn"
-      onClick={() => document.getElementById('file-input').click()}
-    >
-      Change
-    </button>
+              className="change-file-btn"
+              disabled={loading}
+              onClick={() => document.getElementById('file-input').click()}
+            >
+              Change
+            </button>
           </div>
-          
+
+          {/* 🔥 LOADING UI */}
+          {loading && (
+            <div className="loading-box">
+              <div className="spinner"></div>
+              <p>{message}</p>
+            </div>
+          )}
+
+         
+
         </div>
       )}
     </div>

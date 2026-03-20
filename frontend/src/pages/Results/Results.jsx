@@ -4,6 +4,7 @@ import Navbar from '../../components/Navbar/Navbar';
 import MedicineCard from '../../components/MedicineCard/MedicineCard';
 import './Results.css';
 
+
 const Results = () => {
   const navigate = useNavigate();
   const location = useLocation();

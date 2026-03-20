@@ -26,19 +26,40 @@ const MedicineCard = ({ medicine }) => {
         <div className="medicine-icon">💊</div>
 
         <div className="medicine-title">
-          <h3>{cleanName(medicine.name)}</h3>
+         <h3>
+  {String(medicine.name)
+    .replace(/^\d+\s*/, '') // 🔥 remove 1 2 3
+    .replace(/^\d+\.\s*/, '') // 🔥 remove 1.
+    .slice(0, 40)}
+</h3>
+
+          {!medicine.isValid && (
+            <p style={{ color: "red", fontSize: "12px" }}>
+              
+            </p>
+          )}
+
+          <p style={{ fontSize: "12px", color: "#666" }}>
+            Confidence: {medicine.confidence 
+              ? (medicine.confidence * 100).toFixed(1) 
+              : "N/A"}%
+          </p>
+
           <p className="medicine-sub">
-            {medicine.frequency || "As prescribed"}
+            {medicine.frequency || "N/A"}
           </p>
         </div>
       </div>
 
-      {/* ALWAYS VISIBLE DETAILS */}
       <div className="medicine-details">
 
         <div className="detail-row">
           <span>Duration</span>
-          <strong>{extractDuration(medicine.frequency)}</strong>
+            <strong>
+  {medicine.duration 
+    ? medicine.duration 
+    : extractDuration(medicine.frequency)}
+</strong>
         </div>
 
         <div className="detail-row">

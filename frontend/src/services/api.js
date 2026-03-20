@@ -1,20 +1,19 @@
 import axios from 'axios';
 
-// Get API URL from environment variable
+// API URL
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-// Debug (only in development)
 if (import.meta.env.DEV) {
   console.log('🌐 Connecting to backend at:', API_URL);
 }
 
-// Axios instance
+// AXIOS INSTANCE
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 20000, // ✅ increased for AI calls
+  timeout: 120000, // 🔥 2 MINUTES (REALISTIC FOR AI)
 });
 
 // -------------------------------
@@ -38,7 +37,7 @@ api.interceptors.request.use(
 );
 
 // -------------------------------
-// ❌ RESPONSE INTERCEPTOR
+// ❌ RESPONSE INTERCEPTOR (FIXED)
 // -------------------------------
 api.interceptors.response.use(
   (response) => {
@@ -48,19 +47,14 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Timeout
-    if (error.code === 'ECONNABORTED') {
-      console.error('❌ Request timeout');
-      return Promise.reject({
-        message: 'Server timeout. AI processing may be slow. Try again.',
-      });
-    }
+
+    // ❌ REMOVE ALERTS COMPLETELY
+    console.error('❌ API Error:', error);
 
     // Network error
     if (!error.response) {
-      console.error('❌ Network Error');
       return Promise.reject({
-        message: 'Cannot connect to backend. Make sure server is running.',
+        message: 'Cannot connect to backend. Server may be slow or down.',
       });
     }
 
@@ -79,111 +73,67 @@ api.interceptors.response.use(
 // 🔐 AUTH SERVICE
 // -------------------------------
 export const authService = {
-  // Register
   register: async (userData) => {
-    try {
-      const response = await api.post('/auth/register', {
-        fullName: userData.fullName,
-        email: userData.email,
-        password: userData.password,
-        confirmPassword: userData.confirmPassword,
-      });
+    const response = await api.post('/auth/register', userData);
 
-      if (import.meta.env.DEV) {
-        console.log('📥 Register response:', response.data);
-      }
-
-      if (response.data.success && response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error('❌ Register error:', error);
-      throw error;
+    if (response.data.success && response.data.token) {
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
     }
+
+    return response.data;
   },
 
-  // Login
   login: async (credentials) => {
-    try {
-      const response = await api.post('/auth/login', {
-        email: credentials.email,
-        password: credentials.password,
-      });
+    const response = await api.post('/auth/login', credentials);
 
-      if (import.meta.env.DEV) {
-        console.log('📥 Login response:', response.data);
-      }
-
-      if (response.data.success && response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error('❌ Login error:', error);
-      throw error;
+    if (response.data.success && response.data.token) {
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
     }
+
+    return response.data;
   },
 
-  // Logout
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   },
 
-  // Get user
   getCurrentUser: () => {
-    const userStr = localStorage.getItem('user');
-    if (!userStr) return null;
-
     try {
-      return JSON.parse(userStr);
+      return JSON.parse(localStorage.getItem('user'));
     } catch {
       return null;
     }
   },
 
-  // Auth check
   isAuthenticated: () => {
-    return !!(localStorage.getItem('token') && localStorage.getItem('user'));
+    return !!localStorage.getItem('token');
   },
 };
 
 // -------------------------------
-// 🤖 SCAN SERVICE (NEW)
+// 🤖 SCAN SERVICE (FIXED)
 // -------------------------------
 export const scanService = {
   scanPrescription: async (file) => {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
+    const formData = new FormData();
+    formData.append('file', file);
 
-      const response = await api.post(
-        '/scan/prescription',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          timeout: 20000, // AI can take time
-        }
-      );
-
-      if (import.meta.env.DEV) {
-        console.log('📥 Scan response:', response.data);
+    const response = await api.post(
+      '/scan/prescription',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 120000, // 🔥 IMPORTANT FIX
       }
+    );
 
-      return response.data;
-    } catch (error) {
-      console.error('❌ Scan error:', error);
-      throw error;
-    }
+    return response.data;
   },
 };
 
-// Export axios instance
 export default api;
