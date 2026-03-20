@@ -1,6 +1,6 @@
 .upload-box {
   background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(3px); /* reduced blur */
   border: 2px dashed rgba(255, 255, 255, 0.2);
   border-radius: 30px;
   padding: 3rem;
@@ -78,25 +78,46 @@
 
 /* File Preview */
 .file-preview {
-  width: 100%;
+   width: 100%;
   position: relative;
+  padding: 0;          /* remove extra padding */
+  background: none;
 }
 
+/* 🔥 IMAGE FIX */
 .preview-image {
-  max-width: 100%;
-  max-height: 200px;
+  width: 260px;
+  height: auto;
   border-radius: 15px;
   margin-bottom: 1rem;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  object-fit: contain;
+
+  /* blur for privacy */
+  
 }
 
+/* overlay text */
+.file-preview::after {
+  position: absolute;
+  top: 32%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 0.85rem;
+  background: rgba(0,0,0,0.5);
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+/* file info */
 .file-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
+  padding: 0.8rem 1rem;
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 15px;
+  border-radius: 12px;
 }
 
 .file-name {
@@ -114,17 +135,16 @@
 }
 
 .change-file-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 0.5rem 1rem;
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  position: static;
+  margin-left: 10px;
+  padding: 0.4rem 0.9rem;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 6px;
   color: white;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .change-file-btn:hover {
@@ -143,5 +163,46 @@
   
   .upload-prompt h3 {
     font-size: 1.2rem;
+  }
+}
+@media (max-width: 768px) {
+
+  .upload-box {
+    padding: 1.5rem;
+    min-height: auto;
+  }
+
+  .file-preview {
+    padding: 0.8rem;
+  }
+
+  .preview-image {
+    width: 180px;        /* smaller image */
+  }
+
+  .file-preview::after {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+  }
+
+  .file-info {
+    flex-direction: column;
+    gap: 5px;
+    text-align: center;
+  }
+
+  .file-name {
+    max-width: 100%;
+    font-size: 0.9rem;
+  }
+
+  .file-size {
+    font-size: 0.8rem;
+  }
+
+  .change-file-btn.outside {
+    width: 100%;            /* full width button */
+    text-align: center;
+    margin-top: 10px;
   }
 }

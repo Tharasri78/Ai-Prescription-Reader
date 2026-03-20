@@ -4,17 +4,30 @@ import './MedicineCard.css';
 const MedicineCard = ({ medicine }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const cleanName = (name) => {
+    return name?.replace(/^SYP\s*/i, "").trim();
+  };
+
+  const extractDuration = (frequency) => {
+    if (!frequency) return "N/A";
+    const match = frequency.match(/(\d+)\s*d/i);
+    return match ? `${match[1]} days` : "N/A";
+  };
+
   return (
-    <div 
-      className="medicine-card" 
-      style={{ borderColor: medicine.color || '#667eea' }} // ✅ fallback color
-    >
+    <div className="medicine-card premium">
+
+      {/* Header */}
       <div className="medicine-card-header">
         <div className="medicine-icon">💊</div>
+
         <div className="medicine-title">
-          <h3>{medicine.name}</h3>
-          <span className="medicine-dose">{medicine.dosage}</span>
+          <h3>{cleanName(medicine.name)}</h3>
+          <p className="medicine-sub">
+            {medicine.frequency || "As prescribed"}
+          </p>
         </div>
+
         <button 
           className="expand-btn"
           onClick={() => setIsExpanded(!isExpanded)}
@@ -23,43 +36,28 @@ const MedicineCard = ({ medicine }) => {
         </button>
       </div>
 
-      <div className="medicine-frequency">
-        <span className="frequency-badge">{medicine.frequency}</span>
-      </div>
-
-      {/* 🔥 FIX: fallback if description missing */}
-      <p className="medicine-description">
-        {medicine.description || "No description available"}
-      </p>
-
+      {/* Expanded */}
       {isExpanded && (
         <div className="medicine-details">
-          
-          {/* 🔥 SHOW DURATION (NEW FIELD FROM AI) */}
-          <div className="detail-item">
-            <span className="detail-label">Duration:</span>
-            <span className="detail-value">
-              {medicine.duration || "N/A"}
-            </span>
+
+          <div className="detail-row">
+            <span>Duration</span>
+            <strong>{extractDuration(medicine.frequency)}</strong>
           </div>
 
-          {/* 🔥 SAFE FALLBACKS */}
-          <div className="detail-item">
-            <span className="detail-label">Instructions:</span>
-            <span className="detail-value">
-              {medicine.instructions || "Follow doctor's advice"}
-            </span>
+          <div className="detail-row">
+            <span>Instructions</span>
+            <strong>{medicine.instructions || "Follow doctor's advice"}</strong>
           </div>
 
-          <div className="detail-item">
-            <span className="detail-label">Side Effects:</span>
-            <span className="detail-value">
-              {medicine.sideEffects || "Consult doctor if issues occur"}
-            </span>
+          <div className="detail-row">
+            <span>Note</span>
+            <strong>Consult doctor if needed</strong>
           </div>
 
         </div>
       )}
+
     </div>
   );
 };

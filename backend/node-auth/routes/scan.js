@@ -3,7 +3,6 @@ const router = express.Router();
 const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
-const path = require('path');
 const { protect } = require('../middleware/auth');
 const User = require('../models/User');
 
@@ -12,7 +11,7 @@ const User = require('../models/User');
 // @access  Private
 router.post('/prescription', protect, async (req, res) => {
   try {
-    // Check if file exists
+    // Check file
     if (!req.files || !req.files.file) {
       return res.status(400).json({
         success: false,
@@ -21,8 +20,8 @@ router.post('/prescription', protect, async (req, res) => {
     }
 
     const image = req.files.file;
-    
-    // Validate file type
+
+    // Validate type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
     if (!allowedTypes.includes(image.mimetype)) {
       return res.status(400).json({
@@ -31,7 +30,7 @@ router.post('/prescription', protect, async (req, res) => {
       });
     }
 
-    // Validate file size (max 5MB)
+    // Validate size
     if (image.size > 5 * 1024 * 1024) {
       return res.status(400).json({
         success: false,
@@ -39,76 +38,71 @@ router.post('/prescription', protect, async (req, res) => {
       });
     }
 
-    // Create form data for Python AI
+    // 🔥 FIXED: Use buffer instead of temp file
     const formData = new FormData();
-    formData.append('file', fs.createReadStream(image.tempFilePath));
+    formData.append('file', image.data, image.name);
 
-    // FIXED LOG
     console.log(`📤 Sending to Python AI: ${process.env.PYTHON_AI_URL}/scan`);
 
-    // Call Python AI service
+    // Call Python AI
     const aiResponse = await axios.post(
       `${process.env.PYTHON_AI_URL}/scan`,
       formData,
       {
         headers: {
           ...formData.getHeaders(),
-          'Authorization': req.headers.authorization
+          Authorization: req.headers.authorization
         },
         maxContentLength: Infinity,
         maxBodyLength: Infinity,
-        timeout: 30000 // 30 second timeout
+        timeout: 30000
       }
     );
 
-    // Update user's scan count
+    // 🔥 Debug log
+    console.log("✅ AI RESPONSE:", aiResponse.data);
+
+    // Update user scan count
     await User.findByIdAndUpdate(req.user._id, {
       $inc: { scansCount: 1 }
     });
 
-    // Clean up temp file
-    fs.unlinkSync(image.tempFilePath);
-
-    // Return results
-    res.json({
+    // 🔥 Safe response (no crash)
+    return res.json({
       success: true,
-      medicines: aiResponse.data.medicines,
-      raw_text: aiResponse.data.raw_text,
+      medicines: aiResponse.data.medicines || [],
+      raw_text: aiResponse.data.raw_text || "",
       message: 'Prescription processed successfully'
     });
 
   } catch (error) {
-    console.error('Scan error:', error);
+    console.error("❌ FULL ERROR DEBUG ↓↓↓");
 
-    // FIXED CLEANUP
-    if (req.files?.file?.tempFilePath && fs.existsSync(req.files.file.tempFilePath)) {
-      fs.unlinkSync(req.files.file.tempFilePath);
+    if (error.response) {
+      console.error("STATUS:", error.response.status);
+      console.error("DATA:", error.response.data);
+    } else {
+      console.error("MESSAGE:", error.message);
     }
 
-    // Handle specific errors
+    console.error("STACK:", error.stack);
+
     if (error.code === 'ECONNREFUSED') {
       return res.status(503).json({
         success: false,
-        message: 'AI service is unavailable. Please try again later.'
+        message: 'Python AI service is not running'
       });
     }
 
-    if (error.response) {
-      return res.status(error.response.status).json({
-        success: false,
-        message: error.response.data.detail || 'AI processing failed'
-      });
-    }
-
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: 'Error processing prescription'
+      message: error.response?.data?.detail || error.message || 'AI processing failed'
     });
   }
 });
 
 // @route   GET /scan/history
-// @desc    Get user's scan history (placeholder)
+// @desc    Get scan history
 // @access  Private
 router.get('/history', protect, async (req, res) => {
   try {

@@ -23,7 +23,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // File upload
 app.use(fileUpload({
-  useTempFiles: true,
+  useTempFiles: false,
   tempFileDir: path.join(__dirname, 'uploads'),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   createParentPath: true,

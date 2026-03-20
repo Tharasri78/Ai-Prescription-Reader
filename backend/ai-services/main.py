@@ -1,31 +1,19 @@
 from fastapi import FastAPI, File, UploadFile
-from PIL import Image
-
-from services.ocr_service import extract_text
-from services.preprocess_service import preprocess_image
-from services.correction_service import correct_text
-from services.parser_service import parse_medicines
-from models.response_model import ScanResponse
+from gemini import extract_medicines
 
 app = FastAPI()
 
-@app.post("/scan", response_model=ScanResponse)
+@app.get("/")
+def home():
+    return {"message": "AI Service Running"}
+
+@app.post("/scan")
 async def scan(file: UploadFile = File(...)):
-    image = Image.open(file.file).convert("RGB")
+    image_bytes = await file.read()
 
-    processed = preprocess_image(image)
-
-    text = extract_text(processed)
-
-    text = correct_text(text)
-
-    medicines = parse_medicines(text)
+    result = extract_medicines(image_bytes, file.content_type)
 
     return {
-        "success": True,
-        "raw_text": text,
-        "medicines": medicines
+        "medicines": result.get("medicines", []),
+        "raw_text": str(result)
     }
-    
-    
-    

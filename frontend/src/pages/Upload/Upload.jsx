@@ -24,7 +24,7 @@ const Upload = () => {
     alert('Camera feature would open here');
   };
 
-  // 🔥 ONLY THIS FUNCTION CHANGED
+
   const handleUpload = async () => {
     if (!selectedFile) return;
     
@@ -79,7 +79,7 @@ const Upload = () => {
               {isProcessing ? (
                 <>
                   <span className="spinner"></span>
-                  Scanning... {/* ✅ changed text */}
+                  Scanning... 
                 </>
               ) : (
                 <>

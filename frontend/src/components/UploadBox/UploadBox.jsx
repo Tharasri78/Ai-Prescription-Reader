@@ -69,18 +69,20 @@ const UploadBox = ({ onFileSelected, onCameraCapture }) => {
           {previewUrl && (
             <img src={previewUrl} alt="Preview" className="preview-image" />
           )}
+
           <div className="file-info">
             <span className="file-name">{selectedFile.name}</span>
             <span className="file-size">
               {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
             </span>
+            <button
+      className="change-file-btn"
+      onClick={() => document.getElementById('file-input').click()}
+    >
+      Change
+    </button>
           </div>
-          <button 
-            className="change-file-btn"
-            onClick={() => document.getElementById('file-input').click()}
-          >
-            Change
-          </button>
+          
         </div>
       )}
     </div>
