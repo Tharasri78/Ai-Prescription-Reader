@@ -70,10 +70,16 @@ const Navbar = ({ isVisible }) => {
               Home
             </button>
             {user && (
-              <button className="nav-link" onClick={() => navigate('/upload')}>
-                Upload
-              </button>
-            )}
+  <>
+    <button className="nav-link" onClick={() => navigate('/upload')}>
+      Upload
+    </button>
+
+    <button className="nav-link" onClick={() => navigate('/history')}>
+      History
+    </button>
+  </>
+)}
           </>
         )}
       </div>

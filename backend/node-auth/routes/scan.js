@@ -2,24 +2,68 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const FormData = require('form-data');
+
 const { protect } = require('../middleware/auth');
 const User = require('../models/User');
+const Scan = require('../models/Scan');
 const validateMedicineName = require("../utils/validateMedicine");
 
-
+// -----------------------------
+// 🔧 CLEAN NAME
+// -----------------------------
 const cleanName = (name) => {
   return name
-    ?.replace(/\*\*/g, "")        // remove markdown **
-    ?.replace(/^\d+\.?\s*/, "")   // remove "1 ", "2 ", "1."
-    ?.replace(/^[-–]\s*/, "")     // remove weird dash prefix
-    ?.replace(/^\s+|\s+$/g, "")   // trim
+    ?.replace(/\*\*/g, "")
+    ?.replace(/^\d+\.?\s*/, "")
+    ?.replace(/^[-–]\s*/, "")
+    ?.replace(/^\s+|\s+$/g, "")
     ?.trim();
 };
-name: cleanName(result.correctedName),
 
-// @route   POST /scan/prescription
+
+
+// =====================================================
+// 📌 1. GET ALL SCANS (HISTORY)
+// =====================================================
+router.get('/history', protect, async (req, res) => {
+  try {
+    console.log("USER:", req.user);
+
+    // 🔥 SAFETY CHECK
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized"
+      });
+    }
+
+    const scans = await Scan.find({
+      userId: req.user.id   // ✅ SIMPLE & CORRECT
+    }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      scans
+    });
+
+  } catch (error) {
+    console.error("HISTORY ERROR:", error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+
+
+// =====================================================
+// 📌 2. SCAN PRESCRIPTION (SAVE DATA)
+// =====================================================
 router.post('/prescription', protect, async (req, res) => {
   try {
+
     // 🔥 FILE CHECK
     if (!req.files || !req.files.file) {
       return res.status(400).json({
@@ -47,11 +91,9 @@ router.post('/prescription', protect, async (req, res) => {
       });
     }
 
-    // 🔥 SEND IMAGE TO PYTHON
+    // 🔥 SEND IMAGE TO PYTHON AI
     const formData = new FormData();
     formData.append('file', image.data, image.name);
-
-    console.log(`📤 Sending to Python AI: ${process.env.PYTHON_AI_URL}/scan`);
 
     const aiResponse = await axios.post(
       `${process.env.PYTHON_AI_URL}/scan`,
@@ -61,127 +103,164 @@ router.post('/prescription', protect, async (req, res) => {
           ...formData.getHeaders(),
           Authorization: req.headers.authorization
         },
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
         timeout: 90000
       }
     );
 
-    console.log("✅ AI RESPONSE:", aiResponse.data);
-
-    // 🔥 VALID RESPONSE CHECK
     if (!aiResponse.data || !Array.isArray(aiResponse.data.medicines)) {
       return res.status(200).json({
         success: false,
-        message: "AI response invalid. Try again.",
+        message: "AI response invalid",
         medicines: []
       });
     }
 
-     // 🔥 VALIDATION + CLEANING LAYER (CORRECT)
-const validatedMedicines = aiResponse.data.medicines.map((med) => {
+    // 🔥 CLEAN + VALIDATE MEDICINES
+    const validatedMedicines = aiResponse.data.medicines.map((med) => {
+      const result = validateMedicineName(med.name || "");
+      const cleaned = cleanName(result.correctedName || med.name);
 
-  const result = validateMedicineName(med.name || "");
+      return {
+        name: cleaned || "Unknown medicine",
+        originalName: med.name,
+        isValid: result.valid,
+        confidence: typeof med.confidence === "number"
+          ? med.confidence
+          : result.confidence || 0.5,
+        dosage: String(med.dosage || "N/A"),
+        frequency: String(med.frequency || "N/A"),
+        duration: String(med.duration || "N/A")
+      };
+    });
 
-  const cleaned = cleanName(result.correctedName || med.name);
+    const filteredMedicines = validatedMedicines
+      .map(med => ({
+        ...med,
+        name: cleanName(med.name)
+      }))
+      .filter(med => {
+        if (!med.name) return false;
 
-  return {
-    name: cleaned || "Unknown medicine",
-    originalName: med.name,
+        const name = med.name.toLowerCase();
 
-    isValid: result.valid,
+        return (
+          name.length > 2 &&
+          !name.includes("interpretation") &&
+          !name.includes("note") &&
+          !name.includes("based on") &&
+          !name.includes("followed")
+        );
+      });
 
-    confidence: typeof med.confidence === "number"
-      ? med.confidence
-      : result.confidence || 0.5,
-
-    dosage: String(med.dosage || "N/A"),
-    frequency: String(med.frequency || "N/A"),
-    duration: String(med.duration || "N/A")
-  };
-}); 
-
-     const filteredMedicines = validatedMedicines
-  .map(med => ({
-    ...med,
-    name: cleanName(med.name) // 🔥 second pass clean
-  }))
-  .filter(med => {
-    if (!med.name) return false;
-
-    const name = med.name.toLowerCase();
-
-    return (
-      name.length > 2 &&
-      !name.includes("interpretation") &&
-      !name.includes("note") &&
-      !name.includes("based on") &&
-      !name.includes("followed")
-    );
-  });
+    // 🔥 SAVE USER ID (STRING)
+    const userId = req.user.id;
 
     // 🔥 UPDATE USER STATS
-    await User.findByIdAndUpdate(req.user._id, {
+    await User.findByIdAndUpdate(userId, {
       $inc: { scansCount: 1 }
     });
 
-    // 🔥 FINAL RESPONSE
-    return res.json({
+    // 🔥 SAVE SCAN
+    const newScan = await Scan.create({
+      userId,
+      medicines: filteredMedicines,
+      rawText: aiResponse.data.raw_text || ""
+    });
+
+    res.json({
       success: true,
       medicines: filteredMedicines,
-      raw_text: aiResponse.data.raw_text || "",
-      message: 'Prescription processed successfully'
+      scanId: newScan._id
     });
 
   } catch (error) {
-    console.error("❌ FULL ERROR DEBUG ↓↓↓");
+    console.error("SCAN ERROR:", error);
 
-    if (error.response) {
-      console.error("STATUS:", error.response.status);
-      console.error("DATA:", error.response.data);
-    } else {
-      console.error("MESSAGE:", error.message);
-    }
-
-    console.error("STACK:", error.stack);
-
-    // 🔥 TIMEOUT HANDLING
     if (error.code === 'ECONNABORTED') {
       return res.status(504).json({
         success: false,
-        message: "Processing is taking longer than expected. Please try again."
+        message: "AI timeout"
       });
     }
 
-    // 🔥 PYTHON SERVICE DOWN
     if (error.code === 'ECONNREFUSED') {
       return res.status(503).json({
         success: false,
-        message: 'Python AI service is not running'
+        message: "Python AI not running"
       });
     }
 
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
-      message: error.response?.data?.detail || error.message || 'AI processing failed'
+      message: "Scan failed"
     });
   }
 });
 
 
-// @route   GET /scan/history
-router.get('/history', protect, async (req, res) => {
+
+// =====================================================
+// 📌 3. GET SINGLE SCAN
+// =====================================================
+router.get('/:id', protect, async (req, res) => {
   try {
+    const scan = await Scan.findOne({
+      _id: req.params.id,
+      userId: req.user.id
+    });
+
+    if (!scan) {
+      return res.status(404).json({
+        success: false,
+        message: "Scan not found"
+      });
+    }
+
     res.json({
       success: true,
-      scansCount: req.user.scansCount,
-      message: 'Scan history feature coming soon'
+      scan
     });
+
   } catch (error) {
-    console.error('History error:', error);
+    console.error("GET SCAN ERROR:", error);
+
     res.status(500).json({
       success: false,
-      message: 'Error fetching history'
+      message: "Error fetching scan"
+    });
+  }
+});
+
+
+
+// =====================================================
+// 📌 4. DELETE SCAN
+// =====================================================
+router.delete('/:id', protect, async (req, res) => {
+  try {
+    const deleted = await Scan.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user.id
+    });
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Scan not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Scan deleted"
+    });
+
+  } catch (error) {
+    console.error("DELETE ERROR:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Delete failed"
     });
   }
 });

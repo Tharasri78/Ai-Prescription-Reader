@@ -52,11 +52,7 @@ const Register = () => {
       return false;
     }
 
-    // Check terms agreement
-    if (!agreeTerms) {
-      setError('You must agree to the Terms & Privacy');
-      return false;
-    }
+    
 
     return true;
   };

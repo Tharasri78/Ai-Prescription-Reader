@@ -117,7 +117,20 @@ export const authService = {
 // 🤖 SCAN SERVICE (FIXED)
 // -------------------------------
 export const scanService = {
+  getScanById: async (id) => {
+  const response = await api.get(`/scan/${id}`);
+  return response.data;
+},
+  getHistory: async () => {
+  const response = await api.get('/scan/history');
+  return response.data;
+},
+deleteScan: async (id) => {
+  const response = await api.delete(`/scan/${id}`);
+  return response.data;
+},
   scanPrescription: async (file) => {
+
     const formData = new FormData();
     formData.append('file', file);
 

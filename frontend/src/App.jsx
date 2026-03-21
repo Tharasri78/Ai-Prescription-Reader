@@ -7,7 +7,7 @@ import Register from "./pages/Register/Register";
 import Upload from "./pages/Upload/Upload";
 import Results from "./pages/Results/Results";
 import ProtectedRoute from "./components/ProtectedRoute";
-
+import History from "./pages/History/History";
 function App() {
   return (
     <UserProvider>
@@ -34,7 +34,16 @@ function App() {
             </ProtectedRoute>
           }
         />
+      <Route
+        path="/history"
+        element={
+          <ProtectedRoute>
+            <History />
+          </ProtectedRoute>
+        }
+      />
       </Routes>
+      
     </UserProvider>
   );
 }
