@@ -8,192 +8,363 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 5%;
-  background: rgba(10, 15, 30, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(10, 15, 30, 0.94);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   transform: translateY(-100%);
-  transition: transform 0.3s ease;
+  transition: transform 0.45s ease;
 }
 
-.nav-visible {
+.navbar.visible {
   transform: translateY(0);
 }
 
 .nav-brand {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 1.5rem;
+  gap: 0.6rem;
+  font-size: 1.6rem;
   font-weight: 700;
   cursor: pointer;
+  transition: transform 0.3s ease;
 }
 
-.brand-icon {
-  font-size: 1.8rem;
+.nav-brand:hover {
+  transform: scale(1.03);
 }
+
+.brand-icon { font-size: 1.9rem; }
 
 .brand-name {
-  background: linear-gradient(135deg, #fff, #a5b4fc);
+  background: linear-gradient(135deg, #ffffff, #d1d5ff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .brand-highlight {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #a5b4fc, #c084fc);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.nav-links {
+/* ── Desktop ──────────────────────────────────────── */
+.desktop {
   display: flex;
+  align-items: center;
   gap: 2rem;
 }
 
-.nav-link {
+.nav-links.desktop button,
+.nav-actions.desktop button {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.88);
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  padding: 0.5rem 0;
+  padding: 0.5rem 0.4rem;
   position: relative;
-  transition: color 0.3s ease;
+  transition: color 0.25s ease;
 }
 
-.nav-link::after {
+.nav-links.desktop button:hover,
+.nav-actions.desktop button:hover:not(.btn-logout) {
+  color: #d1d5ff !important;
+}
+
+/* Underline hover effect */
+.nav-links.desktop button::after,
+.nav-actions.desktop button:not(.btn-logout)::after {
   content: '';
   position: absolute;
-  bottom: 0;
+  bottom: -5px;
   left: 0;
   width: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #667eea, #764ba2);
-  transition: width 0.3s ease;
+  height: 2.5px;
+  background: linear-gradient(90deg, #a5b4fc, #c084fc);
+  transition: width 0.35s ease;
 }
 
-.nav-link:hover {
-  color: #fff;
-}
-
-.nav-link:hover::after {
+.nav-links.desktop button:hover::after,
+.nav-actions.desktop button:not(.btn-logout):hover::after {
   width: 100%;
-}
-
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
 }
 
 .user-profile {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.4rem 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 50px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  cursor: pointer;
+  gap: 0.9rem;
+  padding: 0.5rem 1.1rem;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
   transition: all 0.3s ease;
 }
 
 .user-profile:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: #667eea;
+  background: rgba(165, 180, 252, 0.15);
+  border-color: #a5b4fc;
+  transform: translateY(-1px);
 }
 
 .user-avatar {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #a5b4fc, #c084fc);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 1rem;
+  font-weight: 700;
   color: white;
-  text-transform: uppercase;
+  font-size: 1.1rem;
 }
 
 .user-name {
-  color: white;
   font-weight: 500;
-  font-size: 0.95rem;
-  max-width: 100px;
+  font-size: 0.98rem;
+  color: white;
+  max-width: 150px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .btn-outline {
-  padding: 0.5rem 1.2rem;
-  background: transparent;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  color: #fff;
+  padding: 0.6rem 1.4rem;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  border-radius: 12px;
+  color: white;
   font-weight: 500;
-  cursor: pointer;
+  background: transparent;
   transition: all 0.3s ease;
 }
 
 .btn-outline:hover {
-  border-color: #667eea;
-  background: rgba(102, 126, 234, 0.1);
-  transform: translateY(-2px);
+  border-color: #c7d2fe;
+  color: #c7d2fe;
+  background: rgba(199, 210, 254, 0.08);
 }
 
 .btn-primary {
-  padding: 0.5rem 1.2rem;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  padding: 0.6rem 1.4rem;
+  background: linear-gradient(135deg, #a5b4fc, #c084fc);
   border: none;
-  border-radius: 8px;
-  color: #fff;
-  font-weight: 500;
-  cursor: pointer;
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
   transition: all 0.3s ease;
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+  background: linear-gradient(135deg, #c7d2fe, #d8b4fe);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(165, 180, 252, 0.35);
 }
 
 .btn-logout {
-  padding: 0.5rem 1.2rem;
-  background: rgba(255, 68, 68, 0.1);
-  border: 2px solid #ff4444;
-  border-radius: 8px;
-  color: #ff4444;
+  padding: 0.6rem 1.4rem;
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid #f87171;
+  border-radius: 12px;
+  color: #f87171;
   font-weight: 500;
-  cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .btn-logout:hover {
-  background: #ff4444;
+  background: #f87171;
   color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(255, 68, 68, 0.3);
+  border-color: #f87171;
+  transform: translateY(-1px);
 }
 
-/* Mobile Responsive */
+/* ── Mobile ───────────────────────────────────────── */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  width: 30px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  z-index: 1101;
+}
+
+.bar {
+  height: 3px;
+  width: 100%;
+  background: white;
+  border-radius: 2px;
+  transition: all 0.35s ease;
+}
+
+.bar.active:nth-child(1) { transform: translateY(8.5px) rotate(45deg); }
+.bar.active:nth-child(2) { opacity: 0; }
+.bar.active:nth-child(3) { transform: translateY(-8.5px) rotate(-45deg); }
+
+/* Mobile menu */
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 82%;
+  max-width: 340px;
+  height: 100vh;
+  background: rgba(10, 15, 30, 0.98);
+  backdrop-filter: blur(14px);
+  transition: right 0.45s cubic-bezier(0.77, 0, 0.175, 1);
+  z-index: 1090;
+  padding: 1.8rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-menu.open {
+  right: 0;
+}
+
+.mobile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.8rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2.6rem;
+  cursor: pointer;
+}
+
+.mobile-links button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.92);
+  font-size: 1.28rem;
+  font-weight: 500;
+  padding: 1.1rem 0;
+  cursor: pointer;
+  transition: color 0.25s ease;
+}
+
+.mobile-links button:hover {
+  color: #d1d5ff !important;
+}
+
+.mobile-auth-section {
+  margin-top: auto;
+  padding-top: 2.2rem;
+  border-top: 1px solid rgba(255,255,255,0.13);
+}
+
+.mobile-user {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  margin-bottom: 1.8rem;
+}
+
+.mobile-avatar {
+  width: 68px;
+  height: 68px;
+  background: linear-gradient(135deg, #a5b4fc, #c084fc);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: white;
+}
+
+.mobile-username {
+  font-size: 1.38rem;
+  font-weight: 600;
+  color: white;
+}
+
+.mobile-logout {
+  width: 100%;
+  padding: 1.1rem;
+  background: rgba(239, 68, 68, 0.16);
+  border: 1px solid #f87171;
+  border-radius: 14px;
+  color: #f87171;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-logout:hover {
+  background: #f87171;
+  color: white;
+}
+
+.mobile-auth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.mobile-auth-buttons button {
+  padding: 1.1rem;
+  font-size: 1.12rem;
+  font-weight: 600;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-auth-buttons button:first-child {
+  background: transparent;
+  border: 2px solid rgba(255,255,255,0.32);
+  color: white;
+}
+
+.mobile-auth-buttons button:first-child:hover {
+  border-color: #d1d5ff;
+  color: #d1d5ff;
+  background: rgba(209, 213, 255, 0.09);
+}
+
+.mobile-auth-buttons button.primary {
+  background: linear-gradient(135deg, #a5b4fc, #c084fc);
+  border: none;
+  color: white;
+}
+
+.mobile-auth-buttons button.primary:hover {
+  background: linear-gradient(135deg, #c7d2fe, #d8b4fe);
+  transform: translateY(-1px);
+}
+
+/* ── Responsive ───────────────────────────────────── */
 @media (max-width: 768px) {
+  .hamburger { display: flex; }
+  .desktop { display: none !important; }
+
   .navbar {
-    padding: 1rem;
+    padding: 1rem 1.3rem;
   }
-  
-  .nav-links {
-    display: none;
-  }
-  
+
   .user-name {
     display: none;
   }
-  
-  .btn-outline, .btn-primary, .btn-logout {
-    padding: 0.4rem 1rem;
-    font-size: 0.9rem;
+}
+
+/* ── Content safety padding (prevents overlap) ────── */
+@media (max-width: 768px) {
+  .home-container,
+  .login-container,
+  .register-container,
+  .upload-container {
+    padding-top: 72px !important;
   }
 }
