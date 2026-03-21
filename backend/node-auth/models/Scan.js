@@ -4,7 +4,8 @@ const medicineSchema = new mongoose.Schema({
   name: String,
   dosage: String,
   frequency: String,
-  duration: String
+  duration: String,
+  
 });
 
 const scanSchema = new mongoose.Schema({
@@ -13,6 +14,8 @@ const scanSchema = new mongoose.Schema({
     ref: "User"
   },
   imageUrl: String,
+  imageData: String,
+imageName: String,
   medicines: [medicineSchema],
   rawText: String, // optional but powerful
 }, {

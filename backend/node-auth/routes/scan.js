@@ -161,11 +161,13 @@ router.post('/prescription', protect, async (req, res) => {
     });
 
     // 🔥 SAVE SCAN
-    const newScan = await Scan.create({
-      userId,
-      medicines: filteredMedicines,
-      rawText: aiResponse.data.raw_text || ""
-    });
+     const newScan = await Scan.create({
+  userId,
+  medicines: filteredMedicines,
+  rawText: aiResponse.data.raw_text || "",
+  imageData: image.data.toString("base64"),
+  imageName: image.name
+});
 
     res.json({
       success: true,
