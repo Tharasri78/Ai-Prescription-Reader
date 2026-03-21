@@ -1,10 +1,10 @@
-# 🧠 AI Prescription Reader
+#   AI Prescription Reader
 
 An AI-powered web application that extracts and structures medicine details from handwritten medical prescriptions.
 
 ---
 
-## 🚀 Overview
+##  Overview
 
 This project converts unstructured prescription images into structured, readable medicine data using AI.
 
@@ -16,9 +16,9 @@ It helps users:
 
 ---
 
-## 🎯 Key Features
+##  Key Features
 
-### 🔍 Core Functionality
+###  Core Functionality
 
 * Upload prescription images
 * Extract medicines using AI (Gemini)
@@ -70,7 +70,7 @@ It helps users:
 
 ---
 
-## 🏗️ Architecture
+##  Architecture
 
 Frontend → Backend → AI Service → Gemini API
 
@@ -168,7 +168,7 @@ uvicorn main:app --reload
 
 ---
 
-## 🔐 Authentication
+##  Authentication
 
 * JWT-based authentication
 * Protected routes for scan and history
@@ -176,7 +176,7 @@ uvicorn main:app --reload
 
 ---
 
-## 🧠 Why This Project Matters
+##  Why This Project Matters
 
 * Solves a real healthcare problem
 * Combines AI with full-stack development
