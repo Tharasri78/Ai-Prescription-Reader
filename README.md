@@ -76,7 +76,7 @@ Frontend → Backend → AI Service → Gemini API
 
 ---
 
-## 🔁 Data Flow
+## Data Flow
 
 1. User uploads prescription image
 2. Frontend sends request to backend
@@ -185,7 +185,7 @@ uvicorn main:app --reload
 
 ---
 
-## 📌 Note
+##  Note
 
 This application provides AI-generated suggestions. Always consult a doctor before taking any medication.
 
