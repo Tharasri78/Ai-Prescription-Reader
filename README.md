@@ -132,7 +132,7 @@ ai-services/
 ### 1. Clone repository
 
 ```
-git clone https://github.com/your-usernam/ai-prescription-reader.git
+git clone https://github.com/Tharasri78/ai-prescription-reader.git
 cd ai-prescription-reader
 ```
 
