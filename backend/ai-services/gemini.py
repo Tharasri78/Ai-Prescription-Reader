@@ -45,7 +45,14 @@ Rules:
             ]
         )
 
-        text = (response.text or "").strip()
+        text = getattr(response, "text", None)
+
+        if not text:
+            print("❌ Empty response from Gemini")
+            raise Exception("Empty response from Gemini")
+
+        text = text.strip()
+
         print("🧠 RAW OUTPUT:\n", text)
 
         medicines = []

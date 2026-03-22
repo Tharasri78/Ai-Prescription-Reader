@@ -50,7 +50,7 @@ router.get('/history', protect, async (req, res) => {
 // =====================================================
 // 📌 2. SCAN PRESCRIPTION
 // =====================================================
-router.post('/prescription', protect, async (req, res) => {
+router.post('/prescription', async (req, res) => {
   try {
 
     // 🔥 FILE CHECK
@@ -73,7 +73,7 @@ router.post('/prescription', protect, async (req, res) => {
     }
 
     // 🔥 SIZE VALIDATION (FIXED)
-    if (image.size > 2 * 1024 * 1024) {
+    if (image.size > 5 * 1024 * 1024) {
       return res.status(400).json({
         success: false,
         message: 'Image must be less than 2MB'
@@ -87,16 +87,23 @@ router.post('/prescription', protect, async (req, res) => {
       contentType: image.mimetype
     });
 
-    const aiResponse = await axios.post(
-      `${process.env.PYTHON_AI_URL.replace(/\/$/, '')}/scan`,
-      formData,
-      {
-        headers: {
-          ...formData.getHeaders()
-        },
-        timeout: 120000 // 🔥 increased
-      }
-    );
+     const url = `${process.env.PYTHON_AI_URL.replace(/\/$/, '')}/scan`;
+
+const config = {
+  headers: {
+    ...formData.getHeaders()
+  },
+  timeout: 180000
+};
+
+let aiResponse;
+
+try {
+  aiResponse = await axios.post(url, formData, config);
+} catch (err) {
+  console.log("⚠️ First attempt failed, retrying...");
+  aiResponse = await axios.post(url, formData, config);
+}
 
     const aiData = aiResponse.data;
 
@@ -138,7 +145,7 @@ router.post('/prescription', protect, async (req, res) => {
     const newScan = await Scan.create({
       userId,
       medicines,
-      rawText: JSON.stringify(aiData),
+      rawText: JSON.stringify(aiData.raw_text || ""),
       imageData: image.data.toString("base64"),
       imageName: image.name
     });
@@ -168,12 +175,14 @@ router.post('/prescription', protect, async (req, res) => {
     }
 
     if (error.response) {
-      return res.status(500).json({
-        success: false,
-        message: "AI service error (502)"
-      });
-    }
+  console.log("AI ERROR REAL:", error.response.data);
 
+  return res.status(500).json({
+    success: false,
+    message: "AI service failed",
+    error: error.response.data
+  });
+}
     res.status(500).json({
       success: false,
       message: "Scan failed"

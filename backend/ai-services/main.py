@@ -2,24 +2,32 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from gemini import extract_medicines
+import asyncio
 
 app = FastAPI()
 
-# CORS (required for frontend)
+# -----------------------------
+# 🌐 CORS
+# -----------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # change later to your frontend URL
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Health check
+# -----------------------------
+# 🏠 HEALTH
+# -----------------------------
 @app.get("/")
 def home():
     return {"message": "AI Service Running"}
 
-# Scan endpoint
+
+# -----------------------------
+# 📸 SCAN
+# -----------------------------
 @app.post("/scan")
 async def scan(file: UploadFile = File(...)):
     try:
@@ -30,25 +38,51 @@ async def scan(file: UploadFile = File(...)):
         if not image_bytes:
             return JSONResponse(
                 status_code=400,
-                content={
-                    "medicines": [],
-                    "error": "Empty file uploaded"
-                }
+                content={"medicines": [], "error": "Empty file"}
             )
 
-        import asyncio
+        # 🔥 FIX: DEFINE MIME TYPE
+        mime_type = file.content_type or "image/jpeg"
+        
+
         print("🚀 Running AI...")
 
-        result = await asyncio.wait_for(
-            asyncio.to_thread(extract_medicines, image_bytes, mime_type),
-            timeout=60
-        )
+        try:
+            result = await asyncio.wait_for(
+                asyncio.to_thread(extract_medicines, image_bytes, mime_type),
+                timeout=60
+            )
 
-        print("✅ AI done")
+            print("✅ AI RESULT:", result)
 
-        medicines = result.get("medicines", [])
+            # 🔥 SAFE CHECK
+            if not isinstance(result, dict):
+                raise Exception("Invalid AI response")
 
+            medicines = result.get("medicines", [])
+
+            if not isinstance(medicines, list):
+                medicines = []
+
+        except asyncio.TimeoutError:
+            print("⏰ AI TIMEOUT")
+            return JSONResponse(
+                status_code=504,
+                content={"medicines": [], "error": "AI timeout"}
+            )
+
+        except Exception as ai_error:
+            print("❌ AI ERROR:", str(ai_error))
+            return JSONResponse(
+                status_code=500,
+                content={"medicines": [], "error": "AI failed"}
+            )
+
+        # -----------------------------
+        # 🧹 CLEAN
+        # -----------------------------
         cleaned = []
+
         for med in medicines:
             name = (med.get("name") or "").strip()
 
@@ -64,7 +98,7 @@ async def scan(file: UploadFile = File(...)):
 
         return {
             "medicines": cleaned,
-            "raw_text": result
+            "raw_text": str(result)[:1000]  # 🔥 SAFE
         }
 
     except Exception as e:
@@ -72,8 +106,5 @@ async def scan(file: UploadFile = File(...)):
 
         return JSONResponse(
             status_code=500,
-            content={
-                "medicines": [],
-                "error": "Processing failed"
-            }
+            content={"medicines": [], "error": str(e)}
         )
