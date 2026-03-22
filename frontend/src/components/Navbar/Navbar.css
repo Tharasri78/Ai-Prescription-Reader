@@ -359,12 +359,3 @@
   }
 }
 
-/* ── Content safety padding (prevents overlap) ────── */
-@media (max-width: 768px) {
-  .home-container,
-  .login-container,
-  .register-container,
-  .upload-container {
-    padding-top: 72px !important;
-  }
-}
