@@ -61,7 +61,7 @@ router.get('/history', protect, async (req, res) => {
 // =====================================================
 // 📌 2. SCAN PRESCRIPTION (SAVE DATA)
 // =====================================================
-router.post('/prescription', protect, async (req, res) => {
+router.post('/prescription', async (req, res) => {
   try {
 
     // 🔥 FILE CHECK
@@ -93,15 +93,16 @@ router.post('/prescription', protect, async (req, res) => {
 
     // 🔥 SEND IMAGE TO PYTHON AI
     const formData = new FormData();
-    formData.append('file', image.data, image.name);
-
+    formData.append('file', image.data, {
+  filename: image.name,
+  contentType: image.mimetype
+});
     const aiResponse = await axios.post(
       `${process.env.PYTHON_AI_URL}/scan`,
       formData,
       {
         headers: {
           ...formData.getHeaders(),
-          Authorization: req.headers.authorization
         },
         timeout: 90000
       }
@@ -153,13 +154,15 @@ router.post('/prescription', protect, async (req, res) => {
       });
 
     // 🔥 SAVE USER ID (STRING)
-    const userId = req.user.id;
+    const userId = req.user?.id || null;
 
     // 🔥 UPDATE USER STATS
-    await User.findByIdAndUpdate(userId, {
-      $inc: { scansCount: 1 }
-    });
-
+     
+     if (userId) {
+  await User.findByIdAndUpdate(userId, {
+    $inc: { scansCount: 1 }
+  });
+}
     // 🔥 SAVE SCAN
      const newScan = await Scan.create({
   userId,
