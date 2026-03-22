@@ -26,7 +26,7 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // mobile / postman
+    if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
@@ -37,9 +37,7 @@ app.use(cors({
   credentials: true
 }));
 
-// 🔥 Handle preflight (IMPORTANT)
 app.options('*', cors());
-
 
 /* =====================================================
    ✅ BODY PARSER
@@ -47,24 +45,20 @@ app.options('*', cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
 /* =====================================================
-   ✅ FILE UPLOAD (FIXED FOR RENDER)
+   🔥 FILE UPLOAD (FINAL FIX)
 ===================================================== */
 app.use(fileUpload({
-  useTempFiles: true,
-  tempFileDir: '/tmp/',   // 🔥 REQUIRED for Render
-  limits: { fileSize: 2 * 1024 * 1024 }, // 🔥 2MB max
+  useTempFiles: false,   // 🔥 THIS FIXES YOUR ISSUE
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   abortOnLimit: true
 }));
-
 
 /* =====================================================
    ✅ ROUTES
 ===================================================== */
 app.use('/auth', authRoutes);
 app.use('/scan', scanRoutes);
-
 
 /* =====================================================
    ✅ HEALTH CHECK
@@ -79,7 +73,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-
 /* =====================================================
    ✅ ROOT
 ===================================================== */
@@ -87,20 +80,9 @@ app.get('/', (req, res) => {
   res.json({
     success: true,
     message: 'MediScan API',
-    version: '1.0.0',
-    endpoints: {
-      auth: {
-        register: 'POST /auth/register',
-        login: 'POST /auth/login'
-      },
-      scan: {
-        prescription: 'POST /scan/prescription',
-        history: 'GET /scan/history'
-      }
-    }
+    version: '1.0.0'
   });
 });
-
 
 /* =====================================================
    ✅ ERROR HANDLER
@@ -108,15 +90,13 @@ app.get('/', (req, res) => {
 app.use((err, req, res, next) => {
   console.error("SERVER ERROR:", err);
 
-  // File too large
   if (err.code === 'LIMIT_FILE_SIZE') {
     return res.status(400).json({
       success: false,
-      message: "File too large (max 2MB)"
+      message: "File too large (max 5MB)"
     });
   }
 
-  // CORS error
   if (err.message === "Not allowed by CORS") {
     return res.status(403).json({
       success: false,
@@ -130,7 +110,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-
 /* =====================================================
    ✅ 404
 ===================================================== */
@@ -140,7 +119,6 @@ app.use((req, res) => {
     message: `Route ${req.originalUrl} not found`
   });
 });
-
 
 /* =====================================================
    ✅ START SERVER
@@ -156,7 +134,6 @@ const server = app.listen(PORT, () => {
 🤖 AI URL: ${process.env.PYTHON_AI_URL}
   `);
 });
-
 
 /* =====================================================
    ✅ UNHANDLED ERRORS
