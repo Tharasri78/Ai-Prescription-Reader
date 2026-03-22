@@ -1,25 +1,28 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from gemini import extract_medicines
 
 app = FastAPI()
 
+# CORS (required for frontend)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # change later to your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# -----------------------------
-# 🏠 HEALTH CHECK
-# -----------------------------
+# Health check
 @app.get("/")
 def home():
     return {"message": "AI Service Running"}
 
-
-# -----------------------------
-# 📸 SCAN ENDPOINT
-# -----------------------------
+# Scan endpoint
 @app.post("/scan")
 async def scan(file: UploadFile = File(...)):
     try:
-        # 🔥 Read file
         image_bytes = await file.read()
 
         if not image_bytes:
@@ -31,20 +34,17 @@ async def scan(file: UploadFile = File(...)):
                 }
             )
 
-        # 🔥 Call Gemini extraction
-        result = extract_medicines(image_bytes, file.content_type)
+        mime_type = file.content_type or "image/jpeg"
 
-        print("🧠 FINAL RESULT:", result)
+        result = extract_medicines(image_bytes, mime_type)
 
         medicines = result.get("medicines", [])
 
-        # 🔥 SAFETY CLEAN (FINAL LAYER)
         cleaned_medicines = []
 
         for med in medicines:
             name = (med.get("name") or "").strip()
 
-            # skip garbage
             if not name or len(name) < 2:
                 continue
 
@@ -57,7 +57,7 @@ async def scan(file: UploadFile = File(...)):
 
         return {
             "medicines": cleaned_medicines,
-            "raw_text": str(result)
+            "raw_text": result
         }
 
     except Exception as e:
