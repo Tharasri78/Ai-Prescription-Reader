@@ -33,7 +33,7 @@ router.get('/history', protect, async (req, res) => {
       });
     }
 
-    const scans = await Scan.find({ userId: req.user.id })
+    const scans = await Scan.find({ userId: req.user._id })
       .sort({ createdAt: -1 });
 
     res.json({ success: true, scans });
@@ -51,7 +51,7 @@ router.get('/history', protect, async (req, res) => {
 // =====================================================
 // 📌 2. SCAN PRESCRIPTION
 // =====================================================
-router.post('/prescription', async (req, res) => {
+router.post('/prescription', protect , async (req, res) => {
   try {
 
     // 🔥 FILE CHECK
@@ -145,7 +145,7 @@ console.log("📦 FINAL DATA LENGTH:", image.data.length);
       })
       .filter(med => med.name && med.name.length > 2);
 
-    const userId = req.user?.id || null;
+    const userId = req.user?._id || req.user?.id || null;
 
     if (userId) {
       await User.findByIdAndUpdate(userId, {
