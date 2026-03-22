@@ -197,7 +197,8 @@ router.post('/prescription', async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: "Scan failed"
+      message: error.response?.data || error.message
+
     });
   }
 });
