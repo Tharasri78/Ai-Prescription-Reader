@@ -16,39 +16,29 @@ const cleanName = (name) => {
     ?.replace(/\*\*/g, "")
     ?.replace(/^\d+\.?\s*/, "")
     ?.replace(/^[-–]\s*/, "")
-    ?.replace(/^\s+|\s+$/g, "")
     ?.trim();
 };
 
 
-
 // =====================================================
-// 📌 1. GET ALL SCANS (HISTORY)
+// 📌 1. GET ALL SCANS
 // =====================================================
 router.get('/history', protect, async (req, res) => {
   try {
-    console.log("USER:", req.user);
-
-    // 🔥 SAFETY CHECK
-    if (!req.user || !req.user.id) {
+    if (!req.user?.id) {
       return res.status(401).json({
         success: false,
         message: "Unauthorized"
       });
     }
 
-    const scans = await Scan.find({
-      userId: req.user.id   // ✅ SIMPLE & CORRECT
-    }).sort({ createdAt: -1 });
+    const scans = await Scan.find({ userId: req.user.id })
+      .sort({ createdAt: -1 });
 
-    res.json({
-      success: true,
-      scans
-    });
+    res.json({ success: true, scans });
 
   } catch (error) {
     console.error("HISTORY ERROR:", error);
-
     res.status(500).json({
       success: false,
       message: error.message
@@ -57,9 +47,8 @@ router.get('/history', protect, async (req, res) => {
 });
 
 
-
 // =====================================================
-// 📌 2. SCAN PRESCRIPTION (SAVE DATA)
+// 📌 2. SCAN PRESCRIPTION
 // =====================================================
 router.post('/prescription', async (req, res) => {
   try {
@@ -79,7 +68,7 @@ router.post('/prescription', async (req, res) => {
     if (!allowedTypes.includes(image.mimetype)) {
       return res.status(400).json({
         success: false,
-        message: 'Please upload a valid image file (JPEG, PNG)'
+        message: 'Invalid image format'
       });
     }
 
@@ -87,94 +76,77 @@ router.post('/prescription', async (req, res) => {
     if (image.size > 5 * 1024 * 1024) {
       return res.status(400).json({
         success: false,
-        message: 'Image size should be less than 5MB'
+        message: 'Image must be < 5MB'
       });
     }
 
-    // 🔥 SEND IMAGE TO PYTHON AI
+    // 🔥 SEND TO PYTHON AI
     const formData = new FormData();
     formData.append('file', image.data, {
-  filename: image.name,
-  contentType: image.mimetype
-});
+      filename: image.name,
+      contentType: image.mimetype
+    });
+
     const aiResponse = await axios.post(
       `${process.env.PYTHON_AI_URL.replace(/\/$/, '')}/scan`,
       formData,
       {
         headers: {
-          ...formData.getHeaders(),
+          ...formData.getHeaders()
         },
         timeout: 90000
       }
     );
 
-    if (!aiResponse.data || !Array.isArray(aiResponse.data.medicines)) {
+    const aiData = aiResponse.data;
+
+    if (!aiData || !Array.isArray(aiData.medicines)) {
       return res.status(200).json({
         success: false,
-        message: "AI response invalid",
+        message: "Invalid AI response",
         medicines: []
       });
     }
 
-    // 🔥 CLEAN + VALIDATE MEDICINES
-    const validatedMedicines = aiResponse.data.medicines.map((med) => {
-      const result = validateMedicineName(med.name || "");
-      const cleaned = cleanName(result.correctedName || med.name);
+    // 🔥 CLEAN + VALIDATE
+    const medicines = aiData.medicines
+      .map((med) => {
+        const result = validateMedicineName(med.name || "");
+        const name = cleanName(result.correctedName || med.name);
 
-      return {
-        name: cleaned || "Unknown medicine",
-        originalName: med.name,
-        isValid: result.valid,
-        confidence: typeof med.confidence === "number"
-          ? med.confidence
-          : result.confidence || 0.5,
-        dosage: String(med.dosage || "N/A"),
-        frequency: String(med.frequency || "N/A"),
-        duration: String(med.duration || "N/A")
-      };
-    });
+        return {
+          name: name || "Unknown",
+          originalName: med.name,
+          isValid: result.valid,
+          confidence: med.confidence ?? result.confidence ?? 0.5,
+          dosage: String(med.dosage || "N/A"),
+          frequency: String(med.frequency || "N/A"),
+          duration: String(med.duration || "N/A")
+        };
+      })
+      .filter(med => med.name && med.name.length > 2);
 
-    const filteredMedicines = validatedMedicines
-      .map(med => ({
-        ...med,
-        name: cleanName(med.name)
-      }))
-      .filter(med => {
-        if (!med.name) return false;
-
-        const name = med.name.toLowerCase();
-
-        return (
-          name.length > 2 &&
-          !name.includes("interpretation") &&
-          !name.includes("note") &&
-          !name.includes("based on") &&
-          !name.includes("followed")
-        );
-      });
-
-    // 🔥 SAVE USER ID (STRING)
+    // 🔥 USER (OPTIONAL)
     const userId = req.user?.id || null;
 
-    // 🔥 UPDATE USER STATS
-     
-     if (userId) {
-  await User.findByIdAndUpdate(userId, {
-    $inc: { scansCount: 1 }
-  });
-}
-    // 🔥 SAVE SCAN
-     const newScan = await Scan.create({
-  userId,
-  medicines: filteredMedicines,
-  rawText: aiResponse.data.raw_text || "",
-  imageData: image.data.toString("base64"),
-  imageName: image.name
-});
+    if (userId) {
+      await User.findByIdAndUpdate(userId, {
+        $inc: { scansCount: 1 }
+      });
+    }
+
+    // 🔥 SAVE TO DB (FIXED)
+    const newScan = await Scan.create({
+      userId,
+      medicines,
+      rawText: JSON.stringify(aiData), // ✅ FIXED HERE
+      imageData: image.data.toString("base64"),
+      imageName: image.name
+    });
 
     res.json({
       success: true,
-      medicines: filteredMedicines,
+      medicines,
       scanId: newScan._id
     });
 
@@ -191,18 +163,16 @@ router.post('/prescription', async (req, res) => {
     if (error.code === 'ECONNREFUSED') {
       return res.status(503).json({
         success: false,
-        message: "Python AI not running"
+        message: "AI not reachable"
       });
     }
 
     res.status(500).json({
       success: false,
       message: error.response?.data || error.message
-
     });
   }
 });
-
 
 
 // =====================================================
@@ -222,21 +192,16 @@ router.get('/:id', protect, async (req, res) => {
       });
     }
 
-    res.json({
-      success: true,
-      scan
-    });
+    res.json({ success: true, scan });
 
   } catch (error) {
-    console.error("GET SCAN ERROR:", error);
-
+    console.error(error);
     res.status(500).json({
       success: false,
-      message: "Error fetching scan"
+      message: "Fetch failed"
     });
   }
 });
-
 
 
 // =====================================================
@@ -258,12 +223,11 @@ router.delete('/:id', protect, async (req, res) => {
 
     res.json({
       success: true,
-      message: "Scan deleted"
+      message: "Deleted"
     });
 
   } catch (error) {
-    console.error("DELETE ERROR:", error);
-
+    console.error(error);
     res.status(500).json({
       success: false,
       message: "Delete failed"
