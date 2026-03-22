@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const FormData = require('form-data');
+const fs = require('fs');
 
 const { protect } = require('../middleware/auth');
 const User = require('../models/User');
@@ -72,38 +73,53 @@ router.post('/prescription', async (req, res) => {
       });
     }
 
-    // 🔥 SIZE VALIDATION (FIXED)
+    // 🔥 SIZE VALIDATION
     if (image.size > 5 * 1024 * 1024) {
       return res.status(400).json({
         success: false,
-        message: 'Image must be less than 2MB'
+        message: 'Image must be less than 5MB'
       });
     }
 
-    // 🔥 SEND TO PYTHON AI
+    // =====================================================
+    // 🔥 FIXED: SEND BUFFER INSTEAD OF STREAM
+    // =====================================================
     const formData = new FormData();
+
+    console.log("📦 Buffer size:", image.data.length);
+
     formData.append('file', image.data, {
       filename: image.name,
-      contentType: image.mimetype
+      contentType: image.mimetype,
+      knownLength: image.data.length
     });
 
-     const url = `${process.env.PYTHON_AI_URL.replace(/\/$/, '')}/scan`;
+    const url = `${process.env.PYTHON_AI_URL.replace(/\/$/, '')}/scan`;
 
-const config = {
-  headers: {
-    ...formData.getHeaders()
-  },
-  timeout: 180000
-};
+    // =====================================================
+    // 🔥 FIXED: PROPER CONFIG
+    // =====================================================
+    const config = {
+      headers: {
+        ...formData.getHeaders(),
+        'Content-Length': formData.getLengthSync()
+      },
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
+      timeout: 300000
+    };
 
-let aiResponse;
+    let aiResponse;
 
-try {
-  aiResponse = await axios.post(url, formData, config);
-} catch (err) {
-  console.log("⚠️ First attempt failed, retrying...");
-  aiResponse = await axios.post(url, formData, config);
-}
+    try {
+      aiResponse = await axios.post(url, formData, config);
+    } catch (err) {
+      console.error("🔥 AI CALL FAILED:");
+      console.error("Status:", err.response?.status);
+      console.error("Data:", err.response?.data);
+      console.error("Message:", err.message);
+      throw err;
+    }
 
     const aiData = aiResponse.data;
 
@@ -159,7 +175,6 @@ try {
   } catch (error) {
     console.error("SCAN ERROR:", error);
 
-    // 🔥 CLEAN ERROR HANDLING (FIXED)
     if (error.code === 'ECONNABORTED') {
       return res.status(504).json({
         success: false,
@@ -175,14 +190,15 @@ try {
     }
 
     if (error.response) {
-  console.log("AI ERROR REAL:", error.response.data);
+      console.log("AI ERROR REAL:", error.response.data);
 
-  return res.status(500).json({
-    success: false,
-    message: "AI service failed",
-    error: error.response.data
-  });
-}
+      return res.status(500).json({
+        success: false,
+        message: "AI service failed",
+        error: error.response.data
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: "Scan failed"
