@@ -59,7 +59,7 @@ const Upload = () => {
       <div className={`upload-content ${isVisible ? 'content-visible' : ''}`}>
         <div className="upload-header">
           <h1>Upload Prescription</h1>
-          <p>Upload or capture your prescription to get started</p>
+          <p>Upload your prescription to get started</p>
         </div>
 
         <div className="upload-main">

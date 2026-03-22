@@ -50,7 +50,7 @@ router.get('/history', protect, async (req, res) => {
 // =====================================================
 // 📌 2. SCAN PRESCRIPTION
 // =====================================================
-router.post('/prescription', async (req, res) => {
+router.post('/prescription', protect, async (req, res) => {
   try {
 
     // 🔥 FILE CHECK
@@ -72,11 +72,11 @@ router.post('/prescription', async (req, res) => {
       });
     }
 
-    // 🔥 SIZE VALIDATION
-    if (image.size > 5 * 1024 * 1024) {
+    // 🔥 SIZE VALIDATION (FIXED)
+    if (image.size > 2 * 1024 * 1024) {
       return res.status(400).json({
         success: false,
-        message: 'Image must be < 5MB'
+        message: 'Image must be less than 2MB'
       });
     }
 
@@ -94,7 +94,7 @@ router.post('/prescription', async (req, res) => {
         headers: {
           ...formData.getHeaders()
         },
-        timeout: 90000
+        timeout: 120000 // 🔥 increased
       }
     );
 
@@ -126,7 +126,6 @@ router.post('/prescription', async (req, res) => {
       })
       .filter(med => med.name && med.name.length > 2);
 
-    // 🔥 USER (OPTIONAL)
     const userId = req.user?.id || null;
 
     if (userId) {
@@ -135,11 +134,11 @@ router.post('/prescription', async (req, res) => {
       });
     }
 
-    // 🔥 SAVE TO DB (FIXED)
+    // 🔥 SAVE
     const newScan = await Scan.create({
       userId,
       medicines,
-      rawText: JSON.stringify(aiData), // ✅ FIXED HERE
+      rawText: JSON.stringify(aiData),
       imageData: image.data.toString("base64"),
       imageName: image.name
     });
@@ -153,23 +152,31 @@ router.post('/prescription', async (req, res) => {
   } catch (error) {
     console.error("SCAN ERROR:", error);
 
+    // 🔥 CLEAN ERROR HANDLING (FIXED)
     if (error.code === 'ECONNABORTED') {
       return res.status(504).json({
         success: false,
-        message: "AI timeout"
+        message: "AI timeout. Try smaller image."
       });
     }
 
     if (error.code === 'ECONNREFUSED') {
       return res.status(503).json({
         success: false,
-        message: "AI not reachable"
+        message: "AI service not reachable"
+      });
+    }
+
+    if (error.response) {
+      return res.status(500).json({
+        success: false,
+        message: "AI service error (502)"
       });
     }
 
     res.status(500).json({
       success: false,
-      message: error.response?.data || error.message
+      message: "Scan failed"
     });
   }
 });

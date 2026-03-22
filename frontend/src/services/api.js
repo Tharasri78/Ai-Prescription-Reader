@@ -10,10 +10,7 @@ if (import.meta.env.DEV) {
 // AXIOS INSTANCE
 const api = axios.create({
   baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 120000, // 🔥 2 MINUTES (REALISTIC FOR AI)
+  timeout: 120000, 
 });
 
 // -------------------------------
@@ -131,22 +128,19 @@ deleteScan: async (id) => {
 },
   scanPrescription: async (file) => {
 
-    const formData = new FormData();
-    formData.append('file', file);
+  const formData = new FormData();
+  formData.append('file', file);
 
-    const response = await api.post(
-      '/scan/prescription',
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        timeout: 120000, // 🔥 IMPORTANT FIX
-      }
-    );
+  const response = await api.post(
+    '/scan/prescription',
+    formData,
+    {
+      timeout: 120000,
+    }
+  );
 
-    return response.data;
-  },
+  return response.data;
+},
 };
 
 export default api;

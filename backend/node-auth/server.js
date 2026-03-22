@@ -2,74 +2,96 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const fileUpload = require('express-fileupload');
-const path = require('path');
 
 // Load env vars
 dotenv.config();
 
-// Connect to database
+// Connect DB
 const connectDB = require('./config/db');
 connectDB();
 
-// Route files
+// Routes
 const authRoutes = require('./routes/auth');
 const scanRoutes = require('./routes/scan');
 
 const app = express();
 
-// Body parser
+/* =====================================================
+   ✅ CORS (MUST BE FIRST)
+===================================================== */
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://ai-prescription-reader.vercel.app"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true); // mobile / postman
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
+}));
+
+// 🔥 Handle preflight (IMPORTANT)
+app.options('*', cors());
+
+
+/* =====================================================
+   ✅ BODY PARSER
+===================================================== */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// File upload
+
+/* =====================================================
+   ✅ FILE UPLOAD (FIXED FOR RENDER)
+===================================================== */
 app.use(fileUpload({
-  useTempFiles: false,
-  tempFileDir: path.join(__dirname, 'uploads'),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-  createParentPath: true,
-  abortOnLimit: true,
-  responseOnLimit: 'File size limit exceeded (max 5MB)'
+  useTempFiles: true,
+  tempFileDir: '/tmp/',   // 🔥 REQUIRED for Render
+  limits: { fileSize: 2 * 1024 * 1024 }, // 🔥 2MB max
+  abortOnLimit: true
 }));
 
-// Enable CORS
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://ai-prescription-reader.vercel.app"
-  ],
-  credentials: true,
-  optionsSuccessStatus: 200
-}));
 
-// Mount routers
+/* =====================================================
+   ✅ ROUTES
+===================================================== */
 app.use('/auth', authRoutes);
 app.use('/scan', scanRoutes);
 
-// Health check route
+
+/* =====================================================
+   ✅ HEALTH CHECK
+===================================================== */
 app.get('/health', (req, res) => {
   res.json({
     success: true,
     message: 'Server is running',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
+    time: new Date().toISOString(),
+    env: process.env.NODE_ENV,
     pythonAI: process.env.PYTHON_AI_URL
   });
 });
 
-// Root route
+
+/* =====================================================
+   ✅ ROOT
+===================================================== */
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    message: 'MediScan Auth API',
+    message: 'MediScan API',
     version: '1.0.0',
     endpoints: {
       auth: {
         register: 'POST /auth/register',
-        login: 'POST /auth/login',
-        me: 'GET /auth/me',
-        update: 'PUT /auth/update',
-        logout: 'POST /auth/logout',
-        verifyToken: 'POST /auth/verify-token'
+        login: 'POST /auth/login'
       },
       scan: {
         prescription: 'POST /scan/prescription',
@@ -79,47 +101,67 @@ app.get('/', (req, res) => {
   });
 });
 
-// Error handling middleware
+
+/* =====================================================
+   ✅ ERROR HANDLER
+===================================================== */
 app.use((err, req, res, next) => {
-  console.error('Server Error:', err.stack);
-  
-  if (err.code === 'FILE_LIMIT') {
+  console.error("SERVER ERROR:", err);
+
+  // File too large
+  if (err.code === 'LIMIT_FILE_SIZE') {
     return res.status(400).json({
       success: false,
-      message: err.message || 'File too large'
+      message: "File too large (max 2MB)"
+    });
+  }
+
+  // CORS error
+  if (err.message === "Not allowed by CORS") {
+    return res.status(403).json({
+      success: false,
+      message: "CORS blocked request"
     });
   }
 
   res.status(500).json({
     success: false,
-    message: 'Something went wrong on the server'
+    message: "Server error"
   });
 });
 
-// 404 handler
+
+/* =====================================================
+   ✅ 404
+===================================================== */
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: `Route ${req.url} not found`
+    message: `Route ${req.originalUrl} not found`
   });
 });
 
+
+/* =====================================================
+   ✅ START SERVER
+===================================================== */
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
   console.log(`
-  🚀 MediScan Auth Server
-  ========================
-  📡 Port: ${PORT}
-  🔧 Environment: ${process.env.NODE_ENV || 'development'}
-  📊 MongoDB: ${process.env.MONGO_URL}
-  🤖 Python AI: ${process.env.PYTHON_AI_URL}
+🚀 MediScan Server Running
+=========================
+🌍 Port: ${PORT}
+⚙️ Env: ${process.env.NODE_ENV}
+🤖 AI URL: ${process.env.PYTHON_AI_URL}
   `);
 });
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err, promise) => {
-  console.log(`❌ Error: ${err.message}`);
-  // Close server & exit process
+
+/* =====================================================
+   ✅ UNHANDLED ERRORS
+===================================================== */
+process.on('unhandledRejection', (err) => {
+  console.log("❌ Unhandled Error:", err.message);
   server.close(() => process.exit(1));
 });

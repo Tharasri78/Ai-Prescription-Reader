@@ -23,6 +23,8 @@ def home():
 @app.post("/scan")
 async def scan(file: UploadFile = File(...)):
     try:
+        print("📥 File received:", file.filename)
+
         image_bytes = await file.read()
 
         if not image_bytes:
@@ -34,21 +36,26 @@ async def scan(file: UploadFile = File(...)):
                 }
             )
 
-        mime_type = file.content_type or "image/jpeg"
+        import asyncio
+        print("🚀 Running AI...")
 
-        result = extract_medicines(image_bytes, mime_type)
+        result = await asyncio.wait_for(
+            asyncio.to_thread(extract_medicines, image_bytes, mime_type),
+            timeout=60
+        )
+
+        print("✅ AI done")
 
         medicines = result.get("medicines", [])
 
-        cleaned_medicines = []
-
+        cleaned = []
         for med in medicines:
             name = (med.get("name") or "").strip()
 
             if not name or len(name) < 2:
                 continue
 
-            cleaned_medicines.append({
+            cleaned.append({
                 "name": name,
                 "dosage": med.get("dosage") or "",
                 "frequency": med.get("frequency") or "",
@@ -56,7 +63,7 @@ async def scan(file: UploadFile = File(...)):
             })
 
         return {
-            "medicines": cleaned_medicines,
+            "medicines": cleaned,
             "raw_text": result
         }
 
