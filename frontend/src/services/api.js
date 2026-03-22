@@ -128,6 +128,22 @@ deleteScan: async (id) => {
 },
   scanPrescription: async (file) => {
 
+  // 🔥 CRITICAL VALIDATION
+  if (!file) {
+    throw new Error("No file selected");
+  }
+
+  if (file.size === 0) {
+    throw new Error("File is empty or corrupted");
+  }
+
+  if (file.size < 1000) {
+    throw new Error("Invalid file (too small)");
+  }
+
+  console.log("📦 Uploading file:", file);
+  console.log("📦 Size:", file.size);
+
   const formData = new FormData();
   formData.append('file', file);
 
@@ -135,6 +151,9 @@ deleteScan: async (id) => {
     '/scan/prescription',
     formData,
     {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
       timeout: 120000,
     }
   );

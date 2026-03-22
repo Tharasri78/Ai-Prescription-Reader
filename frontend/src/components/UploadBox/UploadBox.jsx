@@ -46,14 +46,38 @@ const UploadBox = ({ onFileSelected }) => {
   // FILE HANDLING
   // -----------------------
   const handleFile = (file) => {
-    setSelectedFile(file);
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
+// 🔥 ADD THESE 3 LINES HERE
+  console.log("📦 Selected file:", file);
+  console.log("📦 Size:", file?.size);
+  console.log("📦 Type:", file?.type);
 
-    if (onFileSelected) {
-      onFileSelected(file);
-    }
-  };
+  // 🔥 HARD VALIDATION
+  if (!file) {
+    alert("No file selected");
+    return;
+  }
+
+  if (file.size === 0) {
+    alert("File is empty or corrupted");
+    return;
+  }
+
+  if (file.size < 1000) {
+    alert("Invalid file (too small)");
+    return;
+  }
+
+  console.log("📦 FILE SIZE:", file.size);
+
+  setSelectedFile(file);
+
+  const url = URL.createObjectURL(file);
+  setPreviewUrl(url);
+
+  if (onFileSelected) {
+    onFileSelected(file);
+  }
+};
 
   // -----------------------
   // SCAN FUNCTION (🔥 MAIN FIX)

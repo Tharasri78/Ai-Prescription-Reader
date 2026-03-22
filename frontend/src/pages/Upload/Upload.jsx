@@ -24,24 +24,31 @@ const Upload = () => {
     alert('Camera feature would open here');
   };
 
+   const handleUpload = async () => {
+  if (!selectedFile) return;
 
-  const handleUpload = async () => {
-    if (!selectedFile) return;
-    
-    try {
-      setIsProcessing(true);
+  console.log("📦 Sending file size:", selectedFile.size);
 
-      const data = await scanService.scanPrescription(selectedFile); // ✅ REAL API CALL
+  if (selectedFile.size === 0) {
+    alert("Cannot upload empty file");
+    return;
+  }
 
-      navigate('/results', { state: data }); // ✅ PASS DATA
+  try {
+    setIsProcessing(true);
 
-    } catch (err) {
-      console.error(err);
-      alert(err.message || "Scan failed");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+    const data = await scanService.scanPrescription(selectedFile);
+
+    navigate('/results', { state: data });
+
+  } catch (err) {
+    console.error(err);
+    alert(err.message || "Scan failed");
+  } finally {
+    setIsProcessing(false);
+  }
+};
+  
 
   return (
     <div className="upload-container">
