@@ -88,26 +88,22 @@ router.post('/prescription', async (req, res) => {
 
     console.log("📦 Buffer size:", image.data.length);
 
-    formData.append('file', image.data, {
-      filename: image.name,
-      contentType: image.mimetype,
-      knownLength: image.data.length
-    });
+       formData.append('file', image.data, image.name);
 
     const url = `${process.env.PYTHON_AI_URL.replace(/\/$/, '')}/scan`;
 
     // =====================================================
     // 🔥 FIXED: PROPER CONFIG
     // =====================================================
-    const config = {
-      headers: {
-        ...formData.getHeaders(),
-        'Content-Length': formData.getLengthSync()
-      },
-      maxBodyLength: Infinity,
-      maxContentLength: Infinity,
-      timeout: 300000
-    };
+     const config = {
+  headers: {
+    ...formData.getHeaders()
+  },
+  maxBodyLength: Infinity,
+  maxContentLength: Infinity,
+  timeout: 300000
+};
+console.log("📦 FINAL DATA LENGTH:", image.data.length);
 
     let aiResponse;
 
