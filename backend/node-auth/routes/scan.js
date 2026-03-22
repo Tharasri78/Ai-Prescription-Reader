@@ -98,7 +98,7 @@ router.post('/prescription', async (req, res) => {
   contentType: image.mimetype
 });
     const aiResponse = await axios.post(
-      `${process.env.PYTHON_AI_URL}/scan`,
+      `${process.env.PYTHON_AI_URL.replace(/\/$/, '')}/scan`,
       formData,
       {
         headers: {
