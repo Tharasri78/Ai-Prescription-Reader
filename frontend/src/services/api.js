@@ -51,7 +51,7 @@ api.interceptors.response.use(
     // Network error
     if (!error.response) {
       return Promise.reject({
-        message: 'Cannot connect to backend. Server may be slow or down.',
+        message: 'Server is starting, please wait a few seconds and try again.',
       });
     }
 

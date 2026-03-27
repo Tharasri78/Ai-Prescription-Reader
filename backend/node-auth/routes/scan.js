@@ -107,15 +107,41 @@ console.log("📦 FINAL DATA LENGTH:", image.data.length);
 
     let aiResponse;
 
-    try {
-      aiResponse = await axios.post(url, formData, config);
-    } catch (err) {
-      console.error("🔥 AI CALL FAILED:");
-      console.error("Status:", err.response?.status);
-      console.error("Data:", err.response?.data);
-      console.error("Message:", err.message);
-      throw err;
+// 🔥 WAKE AI SERVICE FIRST
+try {
+  await axios.get(`${process.env.PYTHON_AI_URL.replace(/\/$/, '')}/health`);
+  console.log("✅ AI service is awake");
+} catch (e) {
+  console.log("⏳ AI waking up... waiting 5s");
+  await new Promise(r => setTimeout(r, 5000));
+}
+
+// 🔁 RETRY LOGIC
+const callAI = async (retries = 2) => {
+  try {
+    return await axios.post(url, formData, config);
+  } catch (err) {
+    console.error("⚠️ AI attempt failed:", err.message);
+
+    if (retries > 0) {
+      console.log(`🔁 Retrying AI... (${retries})`);
+      await new Promise(r => setTimeout(r, 4000));
+      return callAI(retries - 1);
     }
+
+    throw err;
+  }
+};
+
+try {
+  aiResponse = await callAI();
+} catch (err) {
+  console.error("🔥 FINAL AI FAILURE:");
+  console.error("Status:", err.response?.status);
+  console.error("Data:", err.response?.data);
+  console.error("Message:", err.message);
+  throw err;
+}
 
     const aiData = aiResponse.data;
 
@@ -174,7 +200,7 @@ console.log("📦 FINAL DATA LENGTH:", image.data.length);
     if (error.code === 'ECONNABORTED') {
       return res.status(504).json({
         success: false,
-        message: "AI timeout. Try smaller image."
+        message: "Request took too long. Please try again."
       });
     }
 
@@ -185,15 +211,14 @@ console.log("📦 FINAL DATA LENGTH:", image.data.length);
       });
     }
 
-    if (error.response) {
-      console.log("AI ERROR REAL:", error.response.data);
+     if (error.response) {
+  console.log("AI ERROR REAL:", error.response.data);
 
-      return res.status(500).json({
-        success: false,
-        message: "AI service failed",
-        error: error.response.data
-      });
-    }
+  return res.status(503).json({
+    success: false,
+    message: "Service is starting, please try again in a few seconds"
+  });
+}
 
     res.status(500).json({
       success: false,

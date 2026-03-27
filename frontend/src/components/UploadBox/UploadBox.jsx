@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './UploadBox.css';
 import { scanService } from '../../services/api';
+import api from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 
 const UploadBox = ({ onFileSelected }) => {
@@ -83,30 +84,51 @@ const UploadBox = ({ onFileSelected }) => {
   // SCAN FUNCTION (🔥 MAIN FIX)
   // -----------------------
   const handleScan = async () => {
-    if (!selectedFile) {
-      alert("Select a file first");
-      return;
+  if (!selectedFile) {
+    alert("Select a file first");
+    return;
+  }
+
+  try {
+    setLoading(true);
+    setMessage("🔄 Starting server (first time may take a few seconds)...");
+
+    // 🔥 WAKE BACKEND
+    await api.get('/health');
+
+    // ⏳ WAIT FOR SERVER TO WAKE
+    await new Promise(r => setTimeout(r, 3000));
+
+    setMessage("🔍 Analyzing prescription...");
+
+    // 🔥 ACTUAL SCAN
+const tryScan = async (retries = 1) => {
+  try {
+    return await scanService.scanPrescription(selectedFile);
+  } catch (err) {
+    if (retries > 0) {
+      console.log("🔁 Retrying scan...");
+      await new Promise(r => setTimeout(r, 3000));
+      return tryScan(retries - 1);
     }
+    throw err;
+  }
+};
 
-    try {
-      setLoading(true);
-      setMessage("🔍 Analyzing prescription...");
+const result = await tryScan();
+    setMessage("🧠 Extracting medicines...");
 
-      const result = await scanService.scanPrescription(selectedFile);
+    setTimeout(() => {
+      navigate('/results', { state: result });
+    }, 700);
 
-      setMessage("🧠 Extracting medicines...");
-
-      setTimeout(() => {
-        navigate('/results', { state: result });
-      }, 700);
-
-    } catch (error) {
-      console.error(error);
-      setMessage("❌ Failed to scan. Try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (error) {
+    console.error(error);
+    setMessage(error?.message || "Server is starting, please try again...");
+  } finally {
+    setLoading(false);
+  }
+};
 
   // -----------------------
   // UI
@@ -153,6 +175,13 @@ const UploadBox = ({ onFileSelected }) => {
             >
               Change
             </button>
+            <button
+    className="scan-btn"
+    disabled={loading}
+    onClick={handleScan}
+  >
+    {loading ? "Processing..." : "Scan Prescription"}
+  </button>
           </div>
 
           {/* 🔥 LOADING UI */}

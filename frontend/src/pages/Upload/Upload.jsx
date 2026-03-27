@@ -101,24 +101,24 @@ const Upload = () => {
           <div className="upload-info">
             <div className="info-card">
               <div className="info-text">
-                <h4>Secure Processing</h4>
-                <p>Your images are encrypted and never shared</p>
-              </div>
-            </div>
+                <h4>AI Prescription Reading</h4>
+    <p>Extracts medicine names, dosage, frequency, and duration from handwritten prescriptions.</p>
+  </div>
+</div>
             
             <div className="info-card">
               <div className="info-text">
-                <h4>Fast Results</h4>
-                <p>Get medicine information in seconds</p>
-              </div>
-            </div>
+                 <h4>Instant Structured Output</h4>
+    <p>Converts messy handwritten notes into clean, readable medicine information instantly.</p>
+  </div>
+</div>
             
             <div className="info-card">
               <div className="info-text">
-                <h4>High Accuracy</h4>
-                <p>99% accurate medicine recognition</p>
-              </div>
-            </div>
+                <h4>History & Tracking</h4>
+    <p>All scanned prescriptions are stored securely, allowing users to revisit previous results anytime.</p>
+  </div>
+</div>
           </div>
         </div>
       </div>

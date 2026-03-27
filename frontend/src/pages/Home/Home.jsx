@@ -26,29 +26,24 @@ const Home = () => {
   }, []);
 
   const features = [
-    {
-      title: "Smart Capture",
-      description: "Upload or capture prescription images with instant preview"
-    },
-    {
-      title: "AI Enhancement",
-      description: "Advanced image processing for maximum OCR accuracy"
-    },
-    {
-      title: "Medicine Cards",
-      description: "Structured, easy-to-read medicine information"
-    },
-    {
-      title: "AI Explanations",
-      description: "Simple, clear explanations for every medicine"
-    }
-  ];
+  {
+    title: "Upload Prescription",
+    description: "Upload handwritten prescriptions and instantly convert them into structured digital data."
+  },
+  {
+    title: "AI Medicine Extraction",
+    description: "Automatically detects medicine names, dosage, frequency, and duration using AI."
+  },
+  {
+    title: "Accurate Data Processing",
+    description: "Cleans and validates extracted medicine names for better accuracy and readability."
+  },
+  {
+    title: "Scan History",
+    description: "View previously scanned prescriptions and access extracted medicine details anytime."
+  }
+];
 
-  const stats = [
-    { number: "99%", label: "Accuracy Rate" },
-    { number: "5+", label: "Medicines" },
-    { number: "24/7", label: "Availability" }
-  ];
 
   return (
     <div className="home-container">
@@ -103,14 +98,7 @@ const Home = () => {
             </button>
           </div>
 
-          <div className="hero-stats">
-            {stats.map((stat, index) => (
-              <div key={index} className="stat-item">
-                <div className="stat-number">{stat.number}</div>
-                <div className="stat-label">{stat.label}</div>
-              </div>
-            ))}
-          </div>
+          
         </div>
 
         <div className="hero-visual">
@@ -152,7 +140,7 @@ const Home = () => {
             Why Choose <span className="title-gradient">MediScan</span>
           </h2>
           <p className="section-subtitle">
-            Experience the future of prescription reading with our advanced AI technology
+            Experience the future of prescription reading with our AI technology
           </p>
         </div>
 
@@ -183,7 +171,7 @@ const Home = () => {
             <div className="step-number">1</div>
             <div className="step-content">
               <h3>Upload Prescription</h3>
-              <p>Take a photo or upload your prescription image</p>
+              <p>Upload your prescription image</p>
             </div>
             <div className="step-connector"></div>
           </div>

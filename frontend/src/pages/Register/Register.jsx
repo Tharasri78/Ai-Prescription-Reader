@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../../services/api';
+import api from '../../services/api';
 import { useUser } from '../../context/UserContext';
 import Navbar from '../../components/Navbar/Navbar';
 import './Register.css';
@@ -63,19 +64,40 @@ const handleSubmit = async (e) => {
   if (!validateForm()) {
     return;
   }
+setLoading(true);
+setError('');
 
-  setLoading(true);
-  setError('');
+try {
+  // 🔥 STEP 1: Wake backend
+  setError("Starting server, please wait...");
 
+  await api.get('/health');
+
+  // ⏳ give it time to wake
+  await new Promise(r => setTimeout(r, 2000));
+
+  console.log('📤 Attempting registration for:', formData.email);
+
+  // 🔁 RETRY LOGIC
+const tryRegister = async (retries = 1) => {
   try {
-    console.log('📤 Attempting registration for:', formData.email);
-    
-    const response = await authService.register({
-      fullName: formData.fullName,  // Backend expects fullName
+    return await authService.register({
+      fullName: formData.fullName,
       email: formData.email,
       password: formData.password,
       confirmPassword: formData.confirmPassword
     });
+  } catch (err) {
+    if (retries > 0) {
+      console.log("🔁 Retrying register...");
+      await new Promise(r => setTimeout(r, 3000));
+      return tryRegister(retries - 1);
+    }
+    throw err;
+  }
+};
+
+const response = await tryRegister();
 
     console.log('✅ Registration successful:', response);
     
@@ -205,13 +227,13 @@ const handleSubmit = async (e) => {
               disabled={loading}
             >
               {loading ? (
-                <>
-                  <span className="spinner"></span>
-                  Creating Account...
-                </>
-              ) : (
-                'Create Account'
-              )}
+  <>
+    <span className="spinner"></span>
+    Starting server & creating account...
+  </>
+) : (
+  'Create Account'
+)}
             </button>
           </form>
 

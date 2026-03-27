@@ -23,6 +23,10 @@ app.add_middleware(
 def home():
     return {"message": "AI Service Running"}
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
 # -----------------------------
 # 📸 SCAN
 # -----------------------------
@@ -46,11 +50,16 @@ async def scan(file: UploadFile = File(...)):
         mime_type = file.content_type or "image/jpeg"
 
         print("🚀 Running AI...")
+        import time
+        time.sleep(2)
 
         # 🔥 FINAL FIX (NO ASYNC / THREAD)
         try:
+            start = time.time()
             result = extract_medicines(image_bytes, mime_type)
 
+            if time.time() - start > 25:
+                raise Exception("AI response too slow")
             print("✅ AI RESULT:", result)
 
             if not isinstance(result, dict):
@@ -64,8 +73,10 @@ async def scan(file: UploadFile = File(...)):
         except Exception as ai_error:
             print("❌ AI ERROR FULL:", repr(ai_error))
             return JSONResponse(
-                status_code=500,
-                content={"medicines": [], "error": str(ai_error)}
+                status_code=503,
+                content={"medicines": [],
+                        "error": "Service is starting, please try again"
+}
             )
 
         # -----------------------------
