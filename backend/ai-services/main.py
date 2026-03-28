@@ -23,7 +23,7 @@ app.add_middleware(
 def home():
     return {"message": "AI Service Running"}
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health():
     return {"status": "ok"}
 
