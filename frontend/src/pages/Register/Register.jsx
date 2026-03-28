@@ -69,7 +69,6 @@ setError('');
 
 try {
   // 🔥 STEP 1: Wake backend
-  setError("Starting server, please wait...");
 
   await api.get('/health');
 
@@ -229,7 +228,7 @@ const response = await tryRegister();
               {loading ? (
   <>
     <span className="spinner"></span>
-    Starting server & creating account...
+     creating account
   </>
 ) : (
   'Create Account'
