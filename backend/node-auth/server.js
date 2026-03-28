@@ -72,6 +72,10 @@ app.get('/health', (req, res) => {
     pythonAI: process.env.PYTHON_AI_URL
   });
 });
+// 🔥 ADD THIS (HEAD support)
+app.head('/health', (req, res) => {
+  res.status(200).end();
+});
 
 /* =====================================================
    ✅ ROOT
