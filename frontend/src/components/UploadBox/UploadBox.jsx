@@ -93,11 +93,20 @@ const UploadBox = ({ onFileSelected }) => {
     setLoading(true);
     setMessage("🔄 Starting server (first time may take a few seconds)...");
 
-    // 🔥 WAKE BACKEND
-    await api.get('/health');
+    const wakeServer = async (retries = 6) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      await api.get('/health');
+      console.log("✅ Backend awake");
+      return;
+    } catch {
+      console.log(`⏳ Waking backend... (${i + 1})`);
+      await new Promise(r => setTimeout(r, 5000));
+    }
+  }
+};
 
-    // ⏳ WAIT FOR SERVER TO WAKE
-    await new Promise(r => setTimeout(r, 3000));
+await wakeServer();
 
     setMessage("🔍 Analyzing prescription...");
 
@@ -175,13 +184,7 @@ const result = await tryScan();
             >
               Change
             </button>
-            <button
-    className="scan-btn"
-    disabled={loading}
-    onClick={handleScan}
-  >
-    {loading ? "Processing..." : "Scan Prescription"}
-  </button>
+            
           </div>
 
           {/* 🔥 LOADING UI */}
