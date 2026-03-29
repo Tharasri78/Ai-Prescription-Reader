@@ -171,7 +171,7 @@ const Home = () => {
             <div className="step-number">1</div>
             <div className="step-content">
               <h3>Upload Prescription</h3>
-              <p>Upload your prescription image</p>
+              <p>Simply upload a photo of your handwritten prescription</p>
             </div>
             <div className="step-connector"></div>
           </div>
@@ -179,8 +179,8 @@ const Home = () => {
           <div className="step-item">
             <div className="step-number">2</div>
             <div className="step-content">
-              <h3>AI Processing</h3>
-              <p>Our AI extracts and structures medicine information</p>
+              <h3>AI Analysis</h3>
+              <p>Our AI reads and converts complex handwritten notes into structured data</p>
             </div>
             <div className="step-connector"></div>
           </div>
@@ -188,8 +188,8 @@ const Home = () => {
           <div className="step-item">
             <div className="step-number">3</div>
             <div className="step-content">
-              <h3>Get Results</h3>
-              <p>View clear medicine cards with AI explanations</p>
+              <h3>Clear Results</h3>
+              <p>Our AI reads and converts complex handwritten notes into structured data</p>
             </div>
           </div>
         </div>
@@ -209,13 +209,12 @@ const Home = () => {
         <div className="about-content">
           <div className="about-text">
             <p>
-              MediScan was born from a simple observation: millions of patients struggle to read 
-              handwritten prescriptions, leading to medication errors and confusion.
+              MediScan was built to solve a real problem — handwritten prescriptions are often hard to read, leading to confusion and medication mistakes.
+
             </p>
             <p>
-              Our mission is to bridge this gap using cutting-edge AI and OCR technology, 
-              making prescription information clear and accessible to everyone, regardless of 
-              language or location.
+              Using AI, MediScan instantly converts complex prescriptions into clear, structured information, helping users understand their medicines quickly and safely.
+
             </p>
           </div>
           <div className="about-image">
