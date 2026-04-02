@@ -4,6 +4,10 @@ An AI-powered web application that extracts and structures medicine details from
 
 ---
 
+Live: https://ai-prescription-reader.vercel.app
+
+---
+
 ##  Overview
 
 This project converts unstructured prescription images into structured, readable medicine data using AI.
