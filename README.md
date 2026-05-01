@@ -1,8 +1,5 @@
 
-```markdown
 # AI PRESCRIPTION READER
-
-### Extract structured medicine information from handwritten prescriptions using AI
 
 <div align="center">
 
@@ -49,20 +46,6 @@
 - **Clean Tables** - Easy to read results
 
 ---
-##  Architecture
-
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   React     │────▶│   Node.js   │────▶│  FastAPI    │────▶│   Gemini    │
-│  Frontend   │◀────│  Backend    │◀────│ AI Service  │◀────│     API     │
-└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
-                           │
-                           ▼
-                    ┌─────────────┐
-                    │   MongoDB   │
-                    │  (History)  │
-                    └─────────────┘
-```
 
 ### Data Flow
 
@@ -86,7 +69,7 @@
 
 ## 📂 Project Structure
 
-```
+```bash
 ai-prescription-reader/
 ├── frontend/ # React app (pages, components, API client)
 ├── backend/ # Node.js + Express (routes, models, auth)
