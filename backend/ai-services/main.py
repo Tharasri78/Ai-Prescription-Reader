@@ -57,7 +57,7 @@ async def scan(file: UploadFile = File(...)):
         result = extract_medicines(image_bytes, mime_type)
         
         duration = time.time() - start_time
-        print(f"✅ Pipeline completed in {duration:.2f} seconds.")
+        print(f"[SUCCESS] Pipeline completed in {duration:.2f} seconds.")
 
         # In case of explicit errors flagged inside pipeline
         if "error" in result:
@@ -69,7 +69,7 @@ async def scan(file: UploadFile = File(...)):
         return result
 
     except Exception as e:
-        print("❌ Server error in scan endpoint:", repr(e))
+        print("[ERROR] Server error in scan endpoint:", repr(e))
         return JSONResponse(
             status_code=500,
             content={
@@ -89,7 +89,7 @@ def get_medicine_info(name: str = Query(..., description="Name of the medicine t
         guide = retrieve_grounded_medicine_guide(name)
         return guide
     except Exception as e:
-        print("❌ Error in RAG lookup endpoint:", repr(e))
+        print("[ERROR] Error in RAG lookup endpoint:", repr(e))
         return JSONResponse(
             status_code=500,
             content={"error": f"Failed to retrieve facts: {str(e)}"}

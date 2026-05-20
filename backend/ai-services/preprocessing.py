@@ -85,6 +85,6 @@ def preprocess_image(image_bytes: bytes) -> tuple[bytes, dict]:
         return encoded_img.tobytes(), metadata
         
     except Exception as e:
-        print(f"⚠️ Preprocessing failed: {repr(e)}. Falling back to original image.")
+        print(f"[WARN] Preprocessing failed: {repr(e)}. Falling back to original image.")
         metadata["error"] = str(e)
         return image_bytes, metadata

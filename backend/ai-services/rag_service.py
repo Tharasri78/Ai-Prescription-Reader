@@ -19,7 +19,7 @@ def load_medical_db():
             with open(DATABASE_PATH, "r", encoding="utf-8") as f:
                 return json.load(f)
     except Exception as e:
-        print(f"❌ Failed to load medical database: {repr(e)}")
+        print(f"[ERROR] Failed to load medical database: {repr(e)}")
     return []
 
 MEDICAL_DB = load_medical_db()
@@ -107,7 +107,7 @@ def retrieve_grounded_medicine_guide(med_name: str) -> dict:
         }
         
     except Exception as e:
-        print(f"❌ RAG Gemini call failed: {repr(e)}")
+        print(f"[ERROR] RAG Gemini call failed: {repr(e)}")
         # Graceful fallback to raw record properties
         return {
             "medicine": record["medicine"],

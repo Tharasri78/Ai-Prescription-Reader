@@ -18,9 +18,9 @@ try:
     # Initialize PaddleOCR engine (lazy loaded on first request to speed up startup)
     PADDLE_AVAILABLE = True
 except ImportError:
-    print("ℹ️ PaddleOCR package not installed. Gemini Vision will act as primary OCR engine.")
+    print("[INFO] PaddleOCR package not installed. Gemini Vision will act as primary OCR engine.")
 except Exception as e:
-    print(f"⚠️ PaddleOCR initialization error: {repr(e)}. Falling back to Gemini.")
+    print(f"[WARN] PaddleOCR initialization error: {repr(e)}. Falling back to Gemini.")
 
 def get_paddle_ocr_engine():
     global paddle_ocr_engine
@@ -29,7 +29,7 @@ def get_paddle_ocr_engine():
             # use_angle_cls=True helps correct text rotation, show_log=False keeps terminal clean
             paddle_ocr_engine = PaddleOCRClass(use_angle_cls=True, lang="en", show_log=False)
         except Exception as e:
-            print(f"⚠️ Failed to instantiate PaddleOCR: {repr(e)}. Setting PADDLE_AVAILABLE = False")
+            print(f"[WARN] Failed to instantiate PaddleOCR: {repr(e)}. Setting PADDLE_AVAILABLE = False")
             globals()["PADDLE_AVAILABLE"] = False
     return paddle_ocr_engine
 
@@ -102,7 +102,7 @@ def run_gemini_vision_ocr(image_bytes: bytes, mime_type: str = "image/jpeg") -> 
         return lines, 0.85, "Gemini Vision Fallback"
         
     except Exception as e:
-        print(f"❌ Gemini Vision OCR failed: {repr(e)}")
+        print(f"[ERROR] Gemini Vision OCR failed: {repr(e)}")
         return [], 0.0, "Failed"
 
 def extract_raw_ocr_text(image_bytes: bytes, mime_type: str = "image/jpeg") -> tuple[list[str], float, str, str]:
@@ -120,16 +120,16 @@ def extract_raw_ocr_text(image_bytes: bytes, mime_type: str = "image/jpeg") -> t
     # Try PaddleOCR if package is available
     if PADDLE_AVAILABLE:
         try:
-            print("🚀 Executing primary OCR: PaddleOCR...")
+            print("[OCR] Executing primary OCR: PaddleOCR...")
             lines, confidence, engine_name = run_paddle_ocr(image_bytes)
             if lines:
                 return lines, confidence, engine_name, "N/A"
             else:
-                print("⚠️ PaddleOCR returned empty text. Cascading to Gemini Vision...")
+                print("[WARN] PaddleOCR returned empty text. Cascading to Gemini Vision...")
         except Exception as e:
-            print(f"⚠️ PaddleOCR execution failed: {repr(e)}. Cascading to Gemini Vision...")
+            print(f"[WARN] PaddleOCR execution failed: {repr(e)}. Cascading to Gemini Vision...")
             
     # Fallback/Primary to Gemini Vision
-    print("🚀 Executing OCR: Gemini Vision...")
+    print("[OCR] Executing OCR: Gemini Vision...")
     lines, confidence, engine_name = run_gemini_vision_ocr(image_bytes, mime_type)
     return lines, confidence, engine_name, prompt_version

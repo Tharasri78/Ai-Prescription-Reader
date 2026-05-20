@@ -78,10 +78,10 @@ def structure_raw_ocr_text(ocr_lines: list[str]) -> list[dict]:
             return structured_data
             
     except Exception as e:
-        print(f"❌ Late-Stage Structuring failed: {repr(e)}")
+        print(f"[ERROR] Late-Stage Structuring failed: {repr(e)}")
         
     # Manual parsing fallback if JSON fails
-    print("⚠️ Structuring JSON decode failed. Falling back to regex parser.")
+    print("[WARN] Structuring JSON decode failed. Falling back to regex parser.")
     parsed = []
     for line in ocr_lines:
         if len(line) < 3:
@@ -109,15 +109,15 @@ def extract_medicines(image_bytes: bytes, mime_type: str = "image/jpeg") -> dict
     """
     try:
         # Step 1: Preprocess Image
-        print("🧼 [1/5] Enhancing image with OpenCV...")
+        print("[1/5] Enhancing image with OpenCV...")
         enhanced_bytes, preproc_meta = preprocess_image(image_bytes)
         
         # Step 2: OCR Raw Line Extraction
-        print("🔍 [2/5] Performing text extraction...")
+        print("[2/5] Performing text extraction...")
         raw_lines, ocr_conf, ocr_engine, ocr_prompt_ver = extract_raw_ocr_text(enhanced_bytes, mime_type)
         
         if not raw_lines:
-            print("❌ No text extracted from prescription.")
+            print("[ERROR] No text extracted from prescription.")
             return {
                 "medicines": [],
                 "interactions": [],
@@ -129,14 +129,14 @@ def extract_medicines(image_bytes: bytes, mime_type: str = "image/jpeg") -> dict
                 }
             }
             
-        print(f"📝 Raw OCR extracted {len(raw_lines)} lines via {ocr_engine}.")
+        print(f"[OCR] Raw OCR extracted {len(raw_lines)} lines via {ocr_engine}.")
         
         # Step 3: Late-stage Gemini Structuring
-        print("🧠 [3/5] Structuring raw text with Gemini...")
+        print("[3/5] Structuring raw text with Gemini...")
         raw_medicines = structure_raw_ocr_text(raw_lines)
         
         # Step 4: Fuzzy Matching and Clinical Safety Validation
-        print("🛡️ [4/5] Running clinical verification & confidence checks...")
+        print("[4/5] Running clinical verification & confidence checks...")
         validated_medicines = []
         for med in raw_medicines:
             name_raw = clean_structured_value(med.get("name"))
@@ -162,7 +162,7 @@ def extract_medicines(image_bytes: bytes, mime_type: str = "image/jpeg") -> dict
             })
             
         # Step 5: Check Drug-Drug Interactions
-        print("⚠️ [5/5] Checking drug-drug interactions...")
+        print("[5/5] Checking drug-drug interactions...")
         interactions = check_drug_interactions(validated_medicines)
         
         # Compile everything
@@ -180,7 +180,7 @@ def extract_medicines(image_bytes: bytes, mime_type: str = "image/jpeg") -> dict
         return response_payload
         
     except Exception as e:
-        print(f"❌ Main Extraction Pipeline failed: {repr(e)}")
+        print(f"[ERROR] Main Extraction Pipeline failed: {repr(e)}")
         return {
             "medicines": [],
             "interactions": [],
