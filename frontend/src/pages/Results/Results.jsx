@@ -32,6 +32,9 @@ const Results = () => {
   const [selectedDrug, setSelectedDrug] = useState(null);
   const [ragDetails, setRagDetails] = useState(null);
   const [loadingRAG, setLoadingRAG] = useState(false);
+  
+  // Pipeline metadata & latencies
+  const [systemMetadata, setSystemMetadata] = useState(null);
 
   useEffect(() => {
     setIsVisible(true);
@@ -42,7 +45,7 @@ const Results = () => {
     if (id) {
       setScanId(id);
       fetchScan(id);
-    } else if (location.state?.medicines) {
+      } else if (location.state?.medicines) {
       // Direct scan result payload from Upload
       const payload = location.state;
       setMedicines(payload.medicines || []);
@@ -50,6 +53,7 @@ const Results = () => {
       setInteractionWarnings(payload.interactionWarnings || []);
       setNeedsReview(payload.needsReview || false);
       setScanId(payload.scanId || null);
+      setSystemMetadata(payload.systemMetadata || null);
       if (payload.scanId) {
         fetchScanImageOnly(payload.scanId);
       } else {
@@ -76,6 +80,7 @@ const Results = () => {
         setScanImage(scan.imageData || null);
         setInteractionWarnings(scan.interactionWarnings || []);
         setNeedsReview(scan.needsReview || false);
+        setSystemMetadata(scan.systemMetadata || null);
       } else {
         navigate('/upload');
       }
@@ -95,6 +100,7 @@ const Results = () => {
       });
       if (res.data.success) {
         setScanImage(res.data.scan.imageData || null);
+        setSystemMetadata(res.data.scan.systemMetadata || null);
       }
     } catch (err) {
       console.error("❌ Failed to load image:", err);
@@ -115,19 +121,24 @@ const Results = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      // Try hitting secondary RAG helper endpoint if present, otherwise direct to Python API URL
-      const response = await axios.get(`${API_URL}/health`);
-      let pythonURL = response.data.pythonAI || 'http://localhost:8000';
-      pythonURL = pythonURL.replace(/\/$/, '');
-      
-      const ragRes = await axios.get(`${pythonURL}/medicine/info?name=${encodeURIComponent(drugName)}`);
-      setRagDetails(ragRes.data);
+      if (res.data && res.data.medicine) {
+        setRagDetails(res.data);
+      } else {
+        setRagDetails({
+          medicine: drugName,
+          activeIngredient: "Unverified",
+          summary: "No medical facts found.",
+          sideEffects: "Unknown",
+          precautions: "Unknown",
+          source: "FDA Reference Manual"
+        });
+      }
     } catch (err) {
       console.error("❌ RAG lookup failed:", err);
       setRagDetails({
         medicine: drugName,
         activeIngredient: "Unverified",
-        summary: "No clinical literature found in current medical corpus. Please verify dosage independently.",
+        summary: "No medical facts found.",
         sideEffects: "Unknown",
         precautions: "Unknown",
         source: "FDA Reference Manual"
@@ -227,6 +238,15 @@ const Results = () => {
                 ? "Decrypting handwritten notes..."
                 : `Pipeline parsed ${medicines.length} medicine rows.`}
             </p>
+            {systemMetadata?.timings && (
+              <div className="telemetry-chip-container">
+                <span className="telemetry-label">Telemetry Latency:</span>
+                <span className="telemetry-chip">🔲 Preproc: {systemMetadata.timings.preprocessing}s</span>
+                <span className="telemetry-chip">🔍 OCR: {systemMetadata.timings.ocr}s</span>
+                <span className="telemetry-chip">🧠 LLM Parse: {systemMetadata.timings.structuring}s</span>
+                <span className="telemetry-chip highlight">⚡ Total: {systemMetadata.timings.total}s</span>
+              </div>
+            )}
           </div>
 
           <div className="results-actions">
@@ -417,6 +437,10 @@ const Results = () => {
               <div className="sidebar-header">
                 <h3>Clinical Knowledge Base</h3>
                 <span className="sidebar-badge">RAG Module</span>
+              </div>
+              
+              <div className="rag-disclaimer-banner">
+                ⚠️ Informational only — not medical advice.
               </div>
               
               {!selectedDrug ? (

@@ -64,6 +64,7 @@ def validate_and_score_medicine(raw_name: str, dosage: str, frequency: str, ocr_
         "originalName": raw_name,
         "isValid": is_valid_drug,
         "confidence": round(composite_score, 3),
+        "similarity": round(fuzzy_match_score * 100, 1),
         "dosage": dosage or "N/A",
         "frequency": frequency or "N/A",
         "safety": {

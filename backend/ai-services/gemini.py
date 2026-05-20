@@ -67,6 +67,7 @@ def structure_raw_ocr_text(ocr_lines: list[str]) -> list[dict]:
     try:
         response = model.generate_content(prompt)
         text_out = getattr(response, "text", "").strip()
+        print(f"[LOG] Gemini Raw Structuring Response:\n{text_out}")
         
         # Clean up any potential markdown fences if returned
         if text_out.startswith("```"):
@@ -107,33 +108,70 @@ def extract_medicines(image_bytes: bytes, mime_type: str = "image/jpeg") -> dict
     5. Clinical Safety Evaluation (Drug-Drug Interactions)
     6. System Metadata Assembly
     """
+    import time
+    start_time = time.time()
     try:
         # Step 1: Preprocess Image
         print("[1/5] Enhancing image with OpenCV...")
+        start_preproc = time.time()
         enhanced_bytes, preproc_meta = preprocess_image(image_bytes)
+        t_preproc = time.time() - start_preproc
+        print(f"[LOG] Image preprocessing completed in {t_preproc:.2f}s. Meta: {preproc_meta}")
+        
+        # Check for decodability error
+        if preproc_meta.get("error") and "decode" in preproc_meta["error"].lower():
+            print(f"[ERROR] Preprocessing decode failure: {preproc_meta['error']}")
+            return {
+                "medicines": [],
+                "interactions": [],
+                "error": "Uploaded image file is corrupted or not a valid image format.",
+                "systemMetadata": {
+                    "ocrModelVersion": "Failed",
+                    "promptVersion": PROMPT_VERSION,
+                    "preprocessingVersion": PREPROCESSING_VERSION,
+                    "timings": {
+                        "preprocessing": round(t_preproc, 2),
+                        "ocr": 0.0,
+                        "structuring": 0.0,
+                        "total": round(time.time() - start_time, 2)
+                    }
+                }
+            }
         
         # Step 2: OCR Raw Line Extraction
         print("[2/5] Performing text extraction...")
+        start_ocr = time.time()
         raw_lines, ocr_conf, ocr_engine, ocr_prompt_ver = extract_raw_ocr_text(enhanced_bytes, mime_type)
+        t_ocr = time.time() - start_ocr
+        print(f"[LOG] OCR completed in {t_ocr:.2f}s using engine '{ocr_engine}'. Extracted {len(raw_lines)} raw text lines.")
+        print(f"[LOG] Raw OCR text lines:\n{json.dumps(raw_lines, indent=2)}")
         
         if not raw_lines:
             print("[ERROR] No text extracted from prescription.")
             return {
                 "medicines": [],
                 "interactions": [],
-                "error": "Unable to confidently extract medicines. Please upload a clearer prescription.",
+                "error": "Unable to extract text from the prescription. Please upload a clearer image.",
                 "systemMetadata": {
-                    "ocrModelVersion": "Failed",
+                    "ocrModelVersion": ocr_engine,
                     "promptVersion": PROMPT_VERSION,
-                    "preprocessingVersion": PREPROCESSING_VERSION
+                    "preprocessingVersion": PREPROCESSING_VERSION,
+                    "timings": {
+                        "preprocessing": round(t_preproc, 2),
+                        "ocr": round(t_ocr, 2),
+                        "structuring": 0.0,
+                        "total": round(time.time() - start_time, 2)
+                    }
                 }
             }
             
-        print(f"[OCR] Raw OCR extracted {len(raw_lines)} lines via {ocr_engine}.")
-        
         # Step 3: Late-stage Gemini Structuring
         print("[3/5] Structuring raw text with Gemini...")
+        start_struct = time.time()
         raw_medicines = structure_raw_ocr_text(raw_lines)
+        t_struct = time.time() - start_struct
+        print(f"[LOG] Late-stage structuring completed in {t_struct:.2f}s.")
+        print(f"[LOG] Raw structured medicines from LLM: {json.dumps(raw_medicines, indent=2)}")
         
         # Step 4: Fuzzy Matching and Clinical Safety Validation
         print("[4/5] Running clinical verification & confidence checks...")
@@ -150,6 +188,8 @@ def extract_medicines(image_bytes: bytes, mime_type: str = "image/jpeg") -> dict
             # Run RapidFuzz dictionary matcher and Rules Engine scoring
             validation_report = validate_and_score_medicine(name_raw, dosage_raw, frequency_raw, ocr_conf)
             
+            print(f"[LOG] Validating '{name_raw}': matched to '{validation_report['name']}' with similarity score {validation_report.get('similarity', 'N/A')} and composite confidence {validation_report['confidence']}.")
+            
             validated_medicines.append({
                 "name": validation_report["name"],
                 "originalName": validation_report["originalName"],
@@ -164,7 +204,9 @@ def extract_medicines(image_bytes: bytes, mime_type: str = "image/jpeg") -> dict
         # Step 5: Check Drug-Drug Interactions
         print("[5/5] Checking drug-drug interactions...")
         interactions = check_drug_interactions(validated_medicines)
+        print(f"[LOG] Checked interactions. Found: {json.dumps(interactions, indent=2)}")
         
+        total_time = time.time() - start_time
         # Compile everything
         response_payload = {
             "medicines": validated_medicines,
@@ -172,7 +214,13 @@ def extract_medicines(image_bytes: bytes, mime_type: str = "image/jpeg") -> dict
             "systemMetadata": {
                 "ocrModelVersion": ocr_engine,
                 "promptVersion": PROMPT_VERSION,
-                "preprocessingVersion": PREPROCESSING_VERSION
+                "preprocessingVersion": PREPROCESSING_VERSION,
+                "timings": {
+                    "preprocessing": round(t_preproc, 2),
+                    "ocr": round(t_ocr, 2),
+                    "structuring": round(t_struct, 2),
+                    "total": round(total_time, 2)
+                }
             },
             "raw_text": "\n".join(raw_lines)
         }
@@ -188,6 +236,12 @@ def extract_medicines(image_bytes: bytes, mime_type: str = "image/jpeg") -> dict
             "systemMetadata": {
                 "ocrModelVersion": "Error",
                 "promptVersion": PROMPT_VERSION,
-                "preprocessingVersion": PREPROCESSING_VERSION
+                "preprocessingVersion": PREPROCESSING_VERSION,
+                "timings": {
+                    "preprocessing": 0.0,
+                    "ocr": 0.0,
+                    "structuring": 0.0,
+                    "total": round(time.time() - start_time, 2)
+                }
             }
         }

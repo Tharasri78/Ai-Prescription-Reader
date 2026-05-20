@@ -56,7 +56,7 @@ def retrieve_grounded_medicine_guide(med_name: str) -> dict:
     default_payload = {
         "medicine": med_name,
         "activeIngredient": "Unknown",
-        "summary": "No verified medical data found in local repository. Consult a doctor.",
+        "summary": "No medical facts found.",
         "sideEffects": "Unknown",
         "precautions": "Unknown",
         "source": "None"

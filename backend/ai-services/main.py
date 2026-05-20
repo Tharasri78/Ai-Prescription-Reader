@@ -3,6 +3,9 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from gemini import extract_medicines
 from rag_service import retrieve_grounded_medicine_guide
+from interaction_service import check_drug_interactions
+from pydantic import BaseModel
+from typing import List
 import time
 
 app = FastAPI(title="MediScan AI Core Service", version="2.0.0")
@@ -93,4 +96,27 @@ def get_medicine_info(name: str = Query(..., description="Name of the medicine t
         return JSONResponse(
             status_code=500,
             content={"error": f"Failed to retrieve facts: {str(e)}"}
+        )
+
+# -----------------------------
+# 🛡️ LIVE DRUG-DRUG INTERACTIONS
+# -----------------------------
+class MedicineItem(BaseModel):
+    name: str
+
+class InteractionRequest(BaseModel):
+    medicines: List[MedicineItem]
+
+@app.post("/medicine/check-interactions")
+def check_interactions_endpoint(req: InteractionRequest):
+    try:
+        meds_list = [{"name": med.name} for med in req.medicines]
+        print(f"🔄 Re-checking safety interactions for: {[m['name'] for m in meds_list]}")
+        warnings = check_drug_interactions(meds_list)
+        return {"success": True, "interactions": warnings}
+    except Exception as e:
+        print("[ERROR] Error in check interactions endpoint:", repr(e))
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": f"Failed to check interactions: {str(e)}"}
         )

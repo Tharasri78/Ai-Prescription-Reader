@@ -102,7 +102,7 @@ router.post('/prescription', protect , async (req, res) => {
   },
   maxBodyLength: Infinity,
   maxContentLength: Infinity,
-  timeout: 300000
+  timeout: 30000
 };
 console.log("📦 FINAL DATA LENGTH:", image.data.length);
 
@@ -160,7 +160,8 @@ try {
         name: med.name || "Unknown",
         originalName: med.originalName || med.name || "Unknown",
         isValid: med.isValid ?? true,
-        confidence: med.confidence ?? 1.0,
+        confidence: med.confidence ?? 0.85,
+        verifiedByHuman: false,
         dosage: String(med.dosage || "N/A"),
         frequency: String(med.frequency || "N/A"),
         duration: String(med.duration || "N/A")
@@ -177,10 +178,18 @@ try {
       `Warning: Unsafe combination of ${inter.med_a} and ${inter.med_b} (${inter.severity}). ${inter.effects}`
     );
 
-    const systemMetadata = aiData.systemMetadata || {
-      ocrModelVersion: "N/A",
-      promptVersion: "N/A",
-      preprocessingVersion: "N/A"
+    const systemMetadata = {
+      ocrModelVersion: aiData.systemMetadata?.ocrModelVersion || "N/A",
+      promptVersion: aiData.systemMetadata?.promptVersion || "N/A",
+      preprocessingVersion: aiData.systemMetadata?.preprocessingVersion || "N/A",
+      ocrEngine: aiData.systemMetadata?.ocrModelVersion || "N/A",
+      llmModel: "gemini-2.5-flash",
+      timings: aiData.systemMetadata?.timings || {
+        preprocessing: 0.0,
+        ocr: 0.0,
+        structuring: 0.0,
+        total: 0.0
+      }
     };
 
     const userId = req.user?._id || req.user?.id || null;
@@ -197,6 +206,7 @@ try {
       medicines,
       confidence: scanConfidence,
       needsReview,
+      status: needsReview ? 'review_needed' : 'completed',
       interactionWarnings,
       systemMetadata,
       rawText: aiData.raw_text || "",
@@ -230,17 +240,50 @@ try {
     }
 
      if (error.response) {
-  console.log("AI ERROR REAL:", error.response.data);
+       console.log("AI ERROR REAL:", error.response.data);
+       
+       if (error.response.data && error.response.data.error) {
+         return res.status(error.response.status || 422).json({
+           success: false,
+           message: error.response.data.error
+         });
+       }
 
-  return res.status(503).json({
-    success: false,
-    message: "Service is starting, please try again in a few seconds"
-  });
-}
+       return res.status(503).json({
+         success: false,
+         message: "Service is starting, please try again in a few seconds"
+       });
+     }
 
     res.status(500).json({
       success: false,
       message: "Scan failed"
+    });
+  }
+});
+
+
+// =====================================================
+// 📌 2.05 GET PRESCRIPTION FACTS (RAG RETRIEVAL PROXY)
+// =====================================================
+router.get('/prescription/facts', protect, async (req, res) => {
+  try {
+    const { name } = req.query;
+    if (!name) {
+      return res.status(400).json({ success: false, message: "Medicine name is required" });
+    }
+
+    console.log(`🔍 Routing RAG Facts request for '${name}' through proxy...`);
+    const pythonURL = process.env.PYTHON_AI_URL.replace(/\/$/, '');
+    const pythonRes = await axios.get(`${pythonURL}/medicine/info?name=${encodeURIComponent(name)}`, { timeout: 10000 });
+
+    res.json(pythonRes.data);
+  } catch (error) {
+    console.error("RAG PROXY ERROR:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve facts from AI Service",
+      error: error.message
     });
   }
 });
@@ -322,20 +365,71 @@ router.put('/:id', protect, async (req, res) => {
       return res.status(400).json({ success: false, message: "Medicines must be an array" });
     }
 
-    const scan = await Scan.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user._id },
-      {
-        medicines,
-        needsReview: false
-      },
-      { new: true }
-    );
-
-    if (!scan) {
+    const originalScan = await Scan.findOne({ _id: req.params.id, userId: req.user._id });
+    if (!originalScan) {
       return res.status(404).json({ success: false, message: "Scan not found" });
     }
 
-    res.json({ success: true, scan });
+    // 🔥 1. Re-calculate individual confidence scores and mark human-reviewed fields as 0.95 (clinically high but realistic)
+    const updatedMedicines = medicines.map(med => {
+      // Find corresponding original medicine
+      const originalMed = originalScan.medicines.find(o => String(o._id) === String(med._id) || o.name === med.name);
+      
+      let hasChanged = true;
+      if (originalMed) {
+        hasChanged = (
+          med.name.toLowerCase().trim() !== originalMed.name.toLowerCase().trim() ||
+          med.dosage.toLowerCase().trim() !== originalMed.dosage.toLowerCase().trim() ||
+          med.frequency.toLowerCase().trim() !== originalMed.frequency.toLowerCase().trim() ||
+          med.duration.toLowerCase().trim() !== originalMed.duration.toLowerCase().trim()
+        );
+      }
+      
+      return {
+        name: med.name || "Unknown",
+        originalName: originalMed ? originalMed.originalName : (med.originalName || med.name || "Unknown"),
+        isValid: med.isValid ?? true,
+        confidence: hasChanged ? 0.95 : (originalMed ? originalMed.confidence : 0.85),
+        verifiedByHuman: hasChanged ? true : (originalMed ? originalMed.verifiedByHuman : false),
+        dosage: String(med.dosage || "N/A"),
+        frequency: String(med.frequency || "N/A"),
+        duration: String(med.duration || "N/A")
+      };
+    });
+
+    // 🔥 2. Re-calculate overall scan average confidence
+    const scanConfidence = updatedMedicines.length > 0
+      ? updatedMedicines.reduce((sum, med) => sum + med.confidence, 0) / updatedMedicines.length
+      : 0.95;
+
+    // 🔥 3. Call FastAPI to re-verify pairwise drug-drug interactions under corrections with a timeout
+    let interactionWarnings = [];
+    try {
+      console.log("🛡️ Contacting AI interaction service for corrected list...");
+      const pythonURL = process.env.PYTHON_AI_URL.replace(/\/$/, '');
+      const safetyRes = await axios.post(`${pythonURL}/medicine/check-interactions`, {
+        medicines: updatedMedicines.map(m => ({ name: m.name }))
+      }, { timeout: 10000 });
+      if (safetyRes.data && Array.isArray(safetyRes.data.interactions)) {
+        interactionWarnings = safetyRes.data.interactions.map(inter =>
+          `Warning: Unsafe combination of ${inter.med_a} and ${inter.med_b} (${inter.severity}). ${inter.effects}`
+        );
+      }
+    } catch (safetyErr) {
+      console.error("⚠️ Safety interaction recheck failed:", safetyErr.message);
+      // Fallback: preserve original warnings if safety service is unreachable
+      interactionWarnings = originalScan.interactionWarnings || [];
+    }
+
+    // 🔥 4. Update scan entry in MongoDB
+    originalScan.medicines = updatedMedicines;
+    originalScan.confidence = scanConfidence;
+    originalScan.needsReview = false;
+    originalScan.status = 'completed'; // Corrections completed by human review
+    originalScan.interactionWarnings = interactionWarnings;
+    await originalScan.save();
+
+    res.json({ success: true, scan: originalScan });
   } catch (error) {
     console.error("UPDATE SCAN ERROR:", error);
     res.status(500).json({ success: false, message: "Failed to update scan" });
