@@ -1,0 +1,98 @@
+[
+  {
+    "medicine": "Paracetamol",
+    "activeIngredient": "Paracetamol / Acetaminophen",
+    "usages": "Relief of mild to moderate pain (headache, toothache, muscle ache, backache) and reduction of fever.",
+    "sideEffects": "Rarely causes side effects at therapeutic doses. Extremely high doses can lead to severe, irreversible liver toxicity.",
+    "precautions": "Strictly avoid alcohol. Do not combine with other acetaminophen-containing cough, cold, or sinus medications.",
+    "source": "OpenFDA"
+  },
+  {
+    "medicine": "Dolo",
+    "activeIngredient": "Paracetamol 650mg",
+    "usages": "Broadly used in India for relieving severe fever, headache, body aches, and joint discomfort.",
+    "sideEffects": "Very safe when taken as directed. Overdosage causes severe hepatic necrosis (liver injury).",
+    "precautions": "Maximum daily dose is 4000mg. Do not repeat dose within 4 hours.",
+    "source": "OpenFDA"
+  },
+  {
+    "medicine": "Calpol",
+    "activeIngredient": "Paracetamol / Acetaminophen",
+    "usages": "Analgesic and antipyretic suspension/tablet widely used to manage pediatric fevers and mild childhood pain.",
+    "sideEffects": "Generally safe. Occasionally causes mild nausea, skin rash, or sweating in sensitive individuals.",
+    "precautions": "Measure liquid doses precisely using a syringe or dosing spoon. Keep away from pediatric reach.",
+    "source": "OpenFDA"
+  },
+  {
+    "medicine": "Crocin",
+    "activeIngredient": "Paracetamol / Caffeine",
+    "usages": "Combination pain reliever formulated for fast relief of headaches, migraines, and severe dental toothaches.",
+    "sideEffects": "Mild insomnia or restlessness due to caffeine content. Gastric irritation if taken on empty stomach.",
+    "precautions": "Avoid other caffeinated drinks (tea, coffee) while taking this. Maximum 4 tablets in 24 hours.",
+    "source": "OpenFDA"
+  },
+  {
+    "medicine": "Azithromycin",
+    "activeIngredient": "Azithromycin",
+    "usages": "Macrolide antibiotic used to treat acute bacterial sinusitis, community-acquired pneumonia, strep throat, and skin infections.",
+    "sideEffects": "Mild diarrhea, loose stools, abdominal cramping, nausea, or headache. Rare QT interval prolongation on ECG.",
+    "precautions": "Complete the full antibiotic cycle. Take 1 hour before or 2 hours after meals to maximize absorption.",
+    "source": "OpenFDA"
+  },
+  {
+    "medicine": "Amoxicillin",
+    "activeIngredient": "Amoxicillin Trihydrate",
+    "usages": "Beta-lactam penicillin-class antibiotic for middle ear infections, tonsillitis, dental abscesses, and urinary tract infections.",
+    "sideEffects": "Diarrhea, skin rash, oral thrush, or mild nausea. Can cause severe anaphylactic allergic reactions in some.",
+    "precautions": "Do not take if allergic to penicillins or cephalosporins. Can reduce birth control effectiveness.",
+    "source": "RxNorm"
+  },
+  {
+    "medicine": "Augmentin",
+    "activeIngredient": "Amoxicillin + Clavulanate Potassium",
+    "usages": "Co-amoxiclav antibiotic targeting beta-lactamase producing bacteria in severe sinus, lung, UTI, and bite wounds.",
+    "sideEffects": "Diarrhea (extremely common), stomach upset, vaginal itching, or mild skin rashes.",
+    "precautions": "Take at the start of a meal to reduce gastrointestinal side effects. Report watery diarrhea immediately.",
+    "source": "RxNorm"
+  },
+  {
+    "medicine": "Ibuprofen",
+    "activeIngredient": "Ibuprofen (NSAID)",
+    "usages": "Nonsteroidal anti-inflammatory drug used to manage dental pain, menstrual cramps, high fever, and rheumatoid arthritis.",
+    "sideEffects": "Heartburn, indigestion, gastric ulcers, potential GI bleeding, renal strain, or elevated blood pressure.",
+    "precautions": "Take with food, milk, or antacids. Do not combine with aspirin or warfarin due to bleeding risk.",
+    "source": "OpenFDA"
+  },
+  {
+    "medicine": "Cetirizine",
+    "activeIngredient": "Cetirizine Hydrochloride",
+    "usages": "Second-generation antihistamine offering relief from seasonal allergies, hay fever, hives, and allergic rhinitis.",
+    "sideEffects": "Mild drowsiness, dry mouth, throat soreness, fatigue, or headache.",
+    "precautions": "Avoid driving or operating heavy machinery if drowsiness is felt. Restrict concurrent alcohol use.",
+    "source": "OpenFDA"
+  },
+  {
+    "medicine": "Pantoprazole",
+    "activeIngredient": "Pantoprazole Sodium",
+    "usages": "Proton pump inhibitor (PPI) designed to treat acid reflux, GERD, Zollinger-Ellison syndrome, and stomach ulcers.",
+    "sideEffects": "Headache, diarrhea, nausea, stomach flatulence, joint stiffness, or dry mouth.",
+    "precautions": "Take 30-60 minutes before the first meal of the day. Avoid long-term continuous use without supervision.",
+    "source": "RxNorm"
+  },
+  {
+    "medicine": "Omeprazole",
+    "activeIngredient": "Omeprazole (PPI)",
+    "usages": "Reduces stomach acid, helping heal esophagus damage caused by acid reflux and protecting against ulcers.",
+    "sideEffects": "Abdominal pain, flatulence, nausea, diarrhea, or low magnesium levels after prolonged usage.",
+    "precautions": "Swallow whole; do not crush or chew. Take in the morning on an empty stomach.",
+    "source": "RxNorm"
+  },
+  {
+    "medicine": "Prednisolone",
+    "activeIngredient": "Prednisolone Acetate",
+    "usages": "Glucocorticoid steroid used to suppress intense inflammation in asthma, severe allergies, and autoimmune flare-ups.",
+    "sideEffects": "Increased appetite, rapid weight gain, high blood sugar, mood changes, insomnia, and bone thinning over time.",
+    "precautions": "Must tap/wean off gradually; never stop abruptly. Can mask signs of active infections.",
+    "source": "RxNorm"
+  }
+]

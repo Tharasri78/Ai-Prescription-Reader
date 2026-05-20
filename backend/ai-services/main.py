@@ -1,9 +1,11 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Query
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from gemini import extract_medicines
+from rag_service import retrieve_grounded_medicine_guide
+import time
 
-app = FastAPI()
+app = FastAPI(title="MediScan AI Core Service", version="2.0.0")
 
 # -----------------------------
 # 🌐 CORS
@@ -21,91 +23,74 @@ app.add_middleware(
 # -----------------------------
 @app.get("/")
 def home():
-    return {"message": "AI Service Running"}
+    return {"message": "AI Prescription Reader Core Service is online."}
 
 @app.api_route("/health", methods=["GET", "HEAD"])
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "service": "medi-scan-ai-core"}
 
 # -----------------------------
-# 📸 SCAN
+# 📸 SCAN PRESCRIPTION
 # -----------------------------
 @app.post("/scan")
 async def scan(file: UploadFile = File(...)):
     try:
-        print("📥 File received:", file.filename)
-
+        print("📥 Received prescription image upload:", file.filename)
         image_bytes = await file.read()
 
-        # 🔥 DEBUG (DO NOT REMOVE)
-        print("📦 FILE SIZE RECEIVED:", len(image_bytes))
-        print("📦 MIME TYPE:", file.content_type)
+        # Debug logs
+        print("📦 File size:", len(image_bytes), "bytes")
+        print("📦 Content type:", file.content_type)
 
         if not image_bytes:
             return JSONResponse(
                 status_code=400,
-                content={"medicines": [], "error": "Empty file"}
+                content={"medicines": [], "interactions": [], "error": "Uploaded image file is empty."}
             )
 
         mime_type = file.content_type or "image/jpeg"
 
-        print("🚀 Running AI...")
-        import time
-        time.sleep(2)
+        print("🚀 Executing AI pipeline...")
+        start_time = time.time()
+        
+        # Execute the full pipeline: Preprocessing -> OCR -> Structuring -> Validation -> Interaction Checking
+        result = extract_medicines(image_bytes, mime_type)
+        
+        duration = time.time() - start_time
+        print(f"✅ Pipeline completed in {duration:.2f} seconds.")
 
-        # 🔥 FINAL FIX (NO ASYNC / THREAD)
-        try:
-            start = time.time()
-            result = extract_medicines(image_bytes, mime_type)
-
-            if time.time() - start > 25:
-                raise Exception("AI response too slow")
-            print("✅ AI RESULT:", result)
-
-            if not isinstance(result, dict):
-                raise Exception("Invalid AI response")
-
-            medicines = result.get("medicines", [])
-
-            if not isinstance(medicines, list):
-                medicines = []
-
-        except Exception as ai_error:
-            print("❌ AI ERROR FULL:", repr(ai_error))
+        # In case of explicit errors flagged inside pipeline
+        if "error" in result:
             return JSONResponse(
-                status_code=503,
-                content={"medicines": [],
-                        "error": "Service is starting, please try again"
-}
+                status_code=422,
+                content=result
             )
 
-        # -----------------------------
-        # 🧹 CLEAN OUTPUT
-        # -----------------------------
-        cleaned = []
-
-        for med in medicines:
-            name = (med.get("name") or "").strip()
-
-            if not name or len(name) < 2:
-                continue
-
-            cleaned.append({
-                "name": name,
-                "dosage": med.get("dosage") or "",
-                "frequency": med.get("frequency") or "",
-                "duration": med.get("duration") or ""
-            })
-
-        return {
-            "medicines": cleaned,
-            "raw_text": str(result)[:1000]
-        }
+        return result
 
     except Exception as e:
-        print("❌ MAIN ERROR:", repr(e))
-
+        print("❌ Server error in scan endpoint:", repr(e))
         return JSONResponse(
             status_code=500,
-            content={"medicines": [], "error": str(e)}
+            content={
+                "medicines": [],
+                "interactions": [],
+                "error": f"Internal server error: {str(e)}"
+            }
+        )
+
+# -----------------------------
+# 📚 RAG DRUG RETRIEVAL
+# -----------------------------
+@app.get("/medicine/info")
+def get_medicine_info(name: str = Query(..., description="Name of the medicine to fetch facts for")):
+    try:
+        print(f"🔍 RAG Lookup request: '{name}'")
+        guide = retrieve_grounded_medicine_guide(name)
+        return guide
+    except Exception as e:
+        print("❌ Error in RAG lookup endpoint:", repr(e))
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Failed to retrieve facts: {str(e)}"}
         )
