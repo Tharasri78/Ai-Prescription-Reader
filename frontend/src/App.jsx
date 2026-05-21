@@ -8,7 +8,6 @@ import Upload from "./pages/Upload/Upload";
 import Results from "./pages/Results/Results";
 import ProtectedRoute from "./components/ProtectedRoute";
 import History from "./pages/History/History";
-import Analytics from "./pages/Analytics/Analytics";
 
 function App() {
   return (
@@ -42,15 +41,6 @@ function App() {
           element={
             <ProtectedRoute>
               <History />
-            </ProtectedRoute>
-          }
-        />
-        
-        <Route
-          path="/analytics"
-          element={
-            <ProtectedRoute>
-              <Analytics />
             </ProtectedRoute>
           }
         />

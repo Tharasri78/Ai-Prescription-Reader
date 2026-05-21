@@ -58,7 +58,6 @@ const Navbar = ({ isVisible = true }) => {
                 <>
                   <button onClick={() => navigate('/upload')}>Upload</button>
                   <button onClick={() => navigate('/history')}>History</button>
-                  <button onClick={() => navigate('/analytics')}>Analytics</button>
                 </>
               )}
             </>
@@ -124,7 +123,6 @@ const Navbar = ({ isVisible = true }) => {
                 <>
                   <button onClick={() => { navigate('/upload'); setIsMobileMenuOpen(false); }}>Upload</button>
                   <button onClick={() => { navigate('/history'); setIsMobileMenuOpen(false); }}>History</button>
-                  <button onClick={() => { navigate('/analytics'); setIsMobileMenuOpen(false); }}>Analytics</button>
                 </>
               )}
             </>
