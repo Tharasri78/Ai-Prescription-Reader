@@ -102,7 +102,7 @@ router.post('/prescription', protect , async (req, res) => {
   },
   maxBodyLength: Infinity,
   maxContentLength: Infinity,
-  timeout: 30000
+  timeout: 120000
 };
 console.log("📦 FINAL DATA LENGTH:", image.data.length);
 

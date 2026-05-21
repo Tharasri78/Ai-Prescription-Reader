@@ -1,9 +1,9 @@
 from fastapi import FastAPI, File, UploadFile, Query
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from gemini import extract_medicines
-from rag_service import retrieve_grounded_medicine_guide
-from interaction_service import check_drug_interactions
+from .gemini import extract_medicines
+from .rag_service import retrieve_grounded_medicine_guide
+from .interaction_service import check_drug_interactions
 from pydantic import BaseModel
 from typing import List
 import time
@@ -38,12 +38,12 @@ def health():
 @app.post("/scan")
 async def scan(file: UploadFile = File(...)):
     try:
-        print("📥 Received prescription image upload:", file.filename)
+        print("[SCAN] Received prescription image upload:", file.filename)
         image_bytes = await file.read()
 
         # Debug logs
-        print("📦 File size:", len(image_bytes), "bytes")
-        print("📦 Content type:", file.content_type)
+        print("[INFO] File size:", len(image_bytes), "bytes")
+        print("[INFO] Content type:", file.content_type)
 
         if not image_bytes:
             return JSONResponse(
@@ -53,7 +53,7 @@ async def scan(file: UploadFile = File(...)):
 
         mime_type = file.content_type or "image/jpeg"
 
-        print("🚀 Executing AI pipeline...")
+        print("[INFO] Executing AI pipeline...")
         start_time = time.time()
         
         # Execute the full pipeline: Preprocessing -> OCR -> Structuring -> Validation -> Interaction Checking
@@ -88,7 +88,7 @@ async def scan(file: UploadFile = File(...)):
 @app.get("/medicine/info")
 def get_medicine_info(name: str = Query(..., description="Name of the medicine to fetch facts for")):
     try:
-        print(f"🔍 RAG Lookup request: '{name}'")
+        print(f"[RAG] Lookup request: '{name}'")
         guide = retrieve_grounded_medicine_guide(name)
         return guide
     except Exception as e:
@@ -111,7 +111,7 @@ class InteractionRequest(BaseModel):
 def check_interactions_endpoint(req: InteractionRequest):
     try:
         meds_list = [{"name": med.name} for med in req.medicines]
-        print(f"🔄 Re-checking safety interactions for: {[m['name'] for m in meds_list]}")
+        print(f"[INFO] Re-checking safety interactions for: {[m['name'] for m in meds_list]}")
         warnings = check_drug_interactions(meds_list)
         return {"success": True, "interactions": warnings}
     except Exception as e:

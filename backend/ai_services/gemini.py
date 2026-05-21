@@ -2,15 +2,16 @@ import os
 import re
 import json
 import google.generativeai as genai
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Import our modular pipeline services
-from preprocessing import preprocess_image
-from ocr_service import extract_raw_ocr_text
-from validation import validate_and_score_medicine
-from interaction_service import check_drug_interactions
+from .preprocessing import preprocess_image
+from .ocr_service import extract_raw_ocr_text, extract_gemini_text
+from .validation import validate_and_score_medicine
+from .interaction_service import check_drug_interactions
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 # Configure Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -66,7 +67,7 @@ def structure_raw_ocr_text(ocr_lines: list[str]) -> list[dict]:
     
     try:
         response = model.generate_content(prompt)
-        text_out = getattr(response, "text", "").strip()
+        text_out = extract_gemini_text(response)
         print(f"[LOG] Gemini Raw Structuring Response:\n{text_out}")
         
         # Clean up any potential markdown fences if returned
@@ -141,7 +142,7 @@ def extract_medicines(image_bytes: bytes, mime_type: str = "image/jpeg") -> dict
         # Step 2: OCR Raw Line Extraction
         print("[2/5] Performing text extraction...")
         start_ocr = time.time()
-        raw_lines, ocr_conf, ocr_engine, ocr_prompt_ver = extract_raw_ocr_text(enhanced_bytes, mime_type)
+        raw_lines, ocr_conf, ocr_engine, ocr_prompt_ver = extract_raw_ocr_text(enhanced_bytes, "image/jpeg")
         t_ocr = time.time() - start_ocr
         print(f"[LOG] OCR completed in {t_ocr:.2f}s using engine '{ocr_engine}'. Extracted {len(raw_lines)} raw text lines.")
         print(f"[LOG] Raw OCR text lines:\n{json.dumps(raw_lines, indent=2)}")

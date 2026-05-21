@@ -1,7 +1,7 @@
 import re
 from rapidfuzz import process, fuzz
-from rules_engine import validate_clinical_safety
-from rag_service import search_medicine_details
+from .rules_engine import validate_clinical_safety
+from .rag_service import search_medicine_details
 
 def validate_and_score_medicine(raw_name: str, dosage: str, frequency: str, ocr_confidence: float) -> dict:
     """
@@ -53,8 +53,15 @@ def validate_and_score_medicine(raw_name: str, dosage: str, frequency: str, ocr_
         
     composite_score = (ocr_confidence * ocr_weight) + (fuzzy_match_score * fuzzy_weight) + (rules_score * rules_weight)
     
-    # Cap between 0.0 and 1.0
-    composite_score = max(0.0, min(1.0, float(composite_score)))
+    # Cap between 0.0 and 0.85 (instead of 1.0)
+    composite_score = max(0.0, min(0.85, float(composite_score)))
+    # Determine confidence label
+    if composite_score >= 0.85:
+        confidence_label = "High Confidence"
+    elif composite_score >= 0.5:
+        confidence_label = "Review Recommended"
+    else:
+        confidence_label = "Manual Review Required"
     
     # Needs human review if confidence is less than 70% or rules engine requested review
     needs_review = (composite_score < 0.70) or safety_report["review_needed"]

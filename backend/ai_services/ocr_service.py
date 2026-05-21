@@ -1,8 +1,29 @@
 import os
+from pathlib import Path
 import google.generativeai as genai
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parent / ".env")
+
+def extract_gemini_text(response) -> str:
+    """Read text from Gemini responses that may include multiple content parts."""
+    try:
+        text = getattr(response, "text", None)
+        if text:
+            return text.strip()
+    except (ValueError, AttributeError):
+        pass
+
+    chunks = []
+    for candidate in getattr(response, "candidates", []) or []:
+        content = getattr(candidate, "content", None)
+        if not content:
+            continue
+        for part in getattr(content, "parts", []) or []:
+            part_text = getattr(part, "text", None)
+            if part_text:
+                chunks.append(part_text)
+    return "\n".join(chunks).strip()
 
 # Configure Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -91,7 +112,7 @@ def run_gemini_vision_ocr(image_bytes: bytes, mime_type: str = "image/jpeg") -> 
             ]
         )
         
-        raw_text = getattr(response, "text", None)
+        raw_text = extract_gemini_text(response)
         if not raw_text:
             raise ValueError("Gemini Vision returned an empty text response.")
             

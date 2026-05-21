@@ -2,9 +2,11 @@ import os
 import json
 from rapidfuzz import process, fuzz
 import google.generativeai as genai
+from pathlib import Path
 from dotenv import load_dotenv
+from .ocr_service import extract_gemini_text
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 # Configure Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -92,7 +94,7 @@ def retrieve_grounded_medicine_guide(med_name: str) -> dict:
     
     try:
         response = model.generate_content(prompt)
-        summary_text = getattr(response, "text", None)
+        summary_text = extract_gemini_text(response) or None
         
         if not summary_text:
             summary_text = f"Used for: {record['usages']}. Source: {record['source']}"
